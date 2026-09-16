@@ -1,0 +1,1063 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Deloitte Gen AI Day 2 — Multi-Agent Systems</title>
+<style>
+:root {
+  color-scheme: dark;
+  --bg: #07080f;
+  --surface: #10111d;
+  --surface2: #181928;
+  --surface3: #1e2035;
+  --border: rgba(99,102,241,.25);
+  --border2: rgba(99,102,241,.12);
+  --accent: #6366f1;
+  --accent2: #818cf8;
+  --cyan: #22d3ee;
+  --green: #34d399;
+  --amber: #fbbf24;
+  --red: #f87171;
+  --pink: #f472b6;
+  --orange: #fb923c;
+  --text: #e2e4f0;
+  --text2: #9ba3c2;
+  --text3: #5c6490;
+  --nav-w: 240px;
+  --r: 12px;
+  --r2: 8px;
+  --glow: 0 0 24px rgba(99,102,241,.3);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,sans-serif;overflow:hidden}
+button{cursor:pointer;border:none;background:none;color:inherit;font:inherit}
+#app{display:flex;height:100vh;overflow:hidden}
+#nav{width:var(--nav-w);min-width:var(--nav-w);background:var(--surface);border-right:1px solid var(--border2);display:flex;flex-direction:column;overflow-y:auto;z-index:10}
+#nav-logo{padding:18px 16px 10px;border-bottom:1px solid var(--border2)}
+.logo-badge{display:flex;align-items:center;gap:10px}
+.dot{width:10px;height:10px;border-radius:50%;background:var(--pink);box-shadow:0 0 8px var(--pink);animation:pulse 2s infinite}
+#nav-logo h1{font-size:12px;font-weight:700;letter-spacing:.05em;color:var(--accent2);text-transform:uppercase}
+#nav-logo p{font-size:10px;color:var(--text3);margin-top:2px;padding-left:20px}
+#nav-items{flex:1;padding:8px 0}
+.nav-item{display:flex;align-items:center;gap:10px;padding:9px 16px;font-size:12.5px;color:var(--text2);border-left:2px solid transparent;transition:all .2s;cursor:pointer;user-select:none}
+.nav-item:hover{background:var(--surface2);color:var(--text)}
+.nav-item.active{color:var(--accent2);border-left-color:var(--accent);background:rgba(99,102,241,.08)}
+.nav-icon{width:20px;text-align:center;font-size:14px;flex-shrink:0}
+.nav-num{width:18px;height:18px;border-radius:50%;background:var(--surface3);font-size:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;color:var(--text3)}
+.nav-item.active .nav-num{background:var(--accent);color:#fff}
+#nav-footer{padding:10px 16px;border-top:1px solid var(--border2);font-size:11px;color:var(--text3)}
+#progress-bar{height:3px;background:var(--surface3);border-radius:2px;margin-top:6px;overflow:hidden}
+#progress-fill{height:100%;background:linear-gradient(90deg,var(--pink),var(--accent));transition:width .4s;border-radius:2px}
+#main{flex:1;overflow-y:auto;overflow-x:hidden}
+.section{display:none;min-height:100vh;padding:36px 44px;animation:fadeIn .3s ease}
+.section.active{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+@keyframes pulse{0%,100%{box-shadow:0 0 8px var(--pink)}50%{box-shadow:0 0 20px var(--pink)}}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
+@keyframes slideIn{from{opacity:0;transform:translateX(-16px)}to{opacity:1;transform:translateX(0)}}
+.sec-header{margin-bottom:28px}
+.sec-tag{display:inline-flex;align-items:center;gap:6px;background:rgba(99,102,241,.12);border:1px solid var(--border);color:var(--accent2);font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;padding:4px 12px;border-radius:20px;margin-bottom:10px}
+.sec-title{font-size:30px;font-weight:800;line-height:1.1;background:linear-gradient(135deg,var(--text),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.sec-sub{font-size:14px;color:var(--text2);margin-top:6px;max-width:620px;line-height:1.6}
+.cards-grid{display:grid;gap:14px}
+.c2{grid-template-columns:repeat(2,1fr)}
+.c3{grid-template-columns:repeat(3,1fr)}
+.c4{grid-template-columns:repeat(4,1fr)}
+.card{background:var(--surface);border:1px solid var(--border2);border-radius:var(--r);padding:22px;transition:border-color .2s,box-shadow .2s}
+.card:hover{border-color:var(--border);box-shadow:var(--glow)}
+.card-icon{font-size:26px;margin-bottom:10px}
+.card-title{font-size:14px;font-weight:700;margin-bottom:5px;color:var(--text)}
+.card-body{font-size:12.5px;color:var(--text2);line-height:1.6}
+.tag{display:inline-block;font-size:11px;font-weight:600;padding:2px 8px;border-radius:20px;margin-bottom:8px}
+.ta{background:rgba(99,102,241,.15);color:var(--accent2)}
+.tc{background:rgba(34,211,238,.12);color:var(--cyan)}
+.tg{background:rgba(52,211,153,.12);color:var(--green)}
+.tam{background:rgba(251,191,36,.12);color:var(--amber)}
+.tr{background:rgba(248,113,113,.12);color:var(--red)}
+.tp{background:rgba(244,114,182,.12);color:var(--pink)}
+.to{background:rgba(251,146,60,.12);color:var(--orange)}
+.flip-wrap{perspective:1000px;cursor:pointer}
+.flip-inner{position:relative;width:100%;height:190px;transform-style:preserve-3d;transition:transform .6s ease;border-radius:var(--r)}
+.flip-wrap.flipped .flip-inner{transform:rotateY(180deg)}
+.flip-front,.flip-back{position:absolute;inset:0;backface-visibility:hidden;-webkit-backface-visibility:hidden;border-radius:var(--r);padding:22px;display:flex;flex-direction:column;justify-content:center}
+.flip-front{background:var(--surface);border:1px solid var(--border2)}
+.flip-back{background:linear-gradient(135deg,var(--surface2),rgba(99,102,241,.08));border:1px solid var(--border);transform:rotateY(180deg)}
+.flip-hint{position:absolute;bottom:9px;right:12px;font-size:10px;color:var(--text3)}
+.flip-hint::before{content:"↻ "}
+#s-hero{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;text-align:center;padding:40px;background:radial-gradient(ellipse 80% 60% at 50% 0%,rgba(244,114,182,.1),transparent)}
+.hero-badge{display:inline-flex;align-items:center;gap:8px;background:rgba(244,114,182,.1);border:1px solid rgba(244,114,182,.25);border-radius:24px;padding:6px 16px;font-size:12px;font-weight:600;color:var(--pink);letter-spacing:.06em;text-transform:uppercase;margin-bottom:22px;animation:float 3s ease-in-out infinite}
+.hero-title{font-size:50px;font-weight:900;line-height:1;letter-spacing:-.02em;margin-bottom:14px;background:linear-gradient(135deg,#fff 0%,var(--pink) 40%,var(--accent2) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.hero-sub{font-size:16px;color:var(--text2);max-width:520px;line-height:1.6;margin-bottom:28px}
+.hero-chips{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-bottom:32px;max-width:640px}
+.hero-chip{padding:6px 14px;border-radius:20px;font-size:12px;font-weight:600;background:var(--surface);border:1px solid var(--border2);color:var(--text2);transition:all .2s;cursor:pointer}
+.hero-chip:hover{border-color:var(--pink);color:var(--pink);background:rgba(244,114,182,.08)}
+.hero-cta{display:inline-flex;align-items:center;gap:8px;background:var(--pink);color:#fff;font-size:15px;font-weight:700;padding:13px 30px;border-radius:10px;cursor:pointer;transition:all .2s;box-shadow:0 0 24px rgba(244,114,182,.4)}
+.hero-cta:hover{transform:translateY(-2px);box-shadow:0 0 36px rgba(244,114,182,.5)}
+.hero-stats{display:flex;gap:40px;margin-top:32px}
+.hs-num{font-size:26px;font-weight:800;color:var(--pink)}
+.hs-label{font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-top:2px}
+.tab-bar{display:flex;gap:4px;border-bottom:1px solid var(--border2);margin-bottom:18px}
+.tab-btn{padding:9px 16px;font-size:13px;font-weight:600;color:var(--text3);border-bottom:2px solid transparent;transition:all .2s;cursor:pointer}
+.tab-btn.active{color:var(--accent2);border-bottom-color:var(--accent)}
+.tab-pane{display:none}
+.tab-pane.active{display:block;animation:fadeIn .2s ease}
+.row{display:flex;gap:14px;margin-bottom:14px;align-items:stretch}
+.row>*{flex:1}
+.mt8{margin-top:8px}
+.mt16{margin-top:16px}
+.mt24{margin-top:24px}
+.label{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text3);margin-bottom:8px}
+.divider{height:1px;background:var(--border2);margin:22px 0}
+.hbox{background:rgba(99,102,241,.06);border:1px solid var(--border);border-radius:var(--r2);padding:14px 18px;margin-top:10px;font-size:13px;color:var(--text2);line-height:1.6}
+.hbox strong{color:var(--accent2)}
+.eb{font-size:12.5px;color:var(--text2);margin-bottom:7px;display:flex;gap:8px;align-items:flex-start;line-height:1.5}
+.cmp-table{width:100%;border-collapse:collapse;margin-top:14px}
+.cmp-table th,.cmp-table td{padding:11px 14px;text-align:left;border-bottom:1px solid var(--border2);font-size:12.5px}
+.cmp-table th{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text3);background:var(--surface2)}
+.cmp-table td:first-child{font-weight:600;color:var(--text2)}
+.cmp-table tr:last-child td{border-bottom:none}
+.cmp-table tr:hover td{background:rgba(99,102,241,.04)}
+.step-list{display:flex;flex-direction:column;gap:10px;margin-top:14px}
+.step-item{display:flex;gap:14px;align-items:flex-start}
+.step-num{width:28px;height:28px;border-radius:50%;background:var(--accent);color:#fff;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px}
+.step-title{font-size:13px;font-weight:700;margin-bottom:3px}
+.step-desc{font-size:12.5px;color:var(--text2);line-height:1.5}
+.code-block{background:var(--bg);border:1px solid var(--border2);border-radius:var(--r2);padding:16px;font-family:monospace;font-size:12px;line-height:1.8;overflow-x:auto;white-space:pre;margin-top:10px}
+.kw{color:var(--accent2)}
+.fn{color:var(--cyan)}
+.str{color:var(--green)}
+.cm{color:var(--text3);font-style:italic}
+.nm{color:var(--amber)}
+/* Agent flow diagrams */
+.flow-row{display:flex;align-items:center;gap:0;flex-wrap:wrap;margin:16px 0}
+.abox{background:var(--surface);border:1px solid var(--border2);border-radius:var(--r);padding:12px 16px;font-size:12px;font-weight:600;text-align:center;min-width:100px;transition:all .2s;cursor:default}
+.abox:hover{border-color:var(--accent);box-shadow:var(--glow)}
+.abox-icon{font-size:20px;margin-bottom:5px}
+.abox-role{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-top:3px}
+.arrow{display:flex;align-items:center;justify-content:center;padding:0 8px;color:var(--text3);font-size:18px;flex-shrink:0}
+.arrow-vert{display:flex;flex-direction:column;align-items:center;color:var(--text3);font-size:14px;padding:4px 0}
+/* Framework selector */
+#fw-sel{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px}
+.fw-tab{padding:7px 16px;border-radius:20px;font-size:13px;font-weight:600;border:1px solid var(--border2);color:var(--text2);background:var(--surface);transition:all .2s;cursor:pointer}
+.fw-tab.active{background:var(--pink);border-color:var(--pink);color:#fff;box-shadow:0 0 16px rgba(244,114,182,.3)}
+.fw-panel{display:none;animation:fadeIn .3s ease}
+.fw-panel.active{display:block}
+.fw-detail{background:var(--surface);border:1px solid var(--border2);border-radius:var(--r);padding:24px}
+.fw-header{display:flex;align-items:flex-start;gap:14px;margin-bottom:18px}
+.fw-emoji{font-size:38px}
+.fw-name{font-size:19px;font-weight:800}
+.fw-tagline{font-size:12.5px;color:var(--text2);margin-top:3px}
+.fw-chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
+.fw-chip{font-size:11px;padding:3px 9px;border-radius:20px;font-weight:600}
+.fw-pc{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:14px}
+.fw-list-title{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;margin-bottom:7px}
+.fw-list-title.pros{color:var(--green)}
+.fw-list-title.cons{color:var(--red)}
+.fw-list li{font-size:12.5px;color:var(--text2);margin-bottom:5px;list-style:none;display:flex;gap:5px}
+.fw-list.pros li::before{content:"✓";color:var(--green);flex-shrink:0}
+.fw-list.cons li::before{content:"✗";color:var(--red);flex-shrink:0}
+.fw-code{background:var(--bg);border:1px solid var(--border2);border-radius:var(--r2);padding:14px;font-family:monospace;font-size:11.5px;color:var(--text2);margin-top:14px;overflow-x:auto;white-space:pre}
+/* Pattern step-through */
+#pat-demo{background:var(--surface);border:1px solid var(--border2);border-radius:var(--r);overflow:hidden;margin-top:18px}
+#pat-tabs{display:flex;border-bottom:1px solid var(--border2)}
+.pat-tab{flex:1;padding:10px 6px;font-size:11px;font-weight:600;text-align:center;color:var(--text3);border-bottom:2px solid transparent;transition:all .2s;cursor:pointer}
+.pat-tab.active{color:var(--accent2);border-bottom-color:var(--accent)}
+.pat-tab.done{color:var(--green)}
+#pat-body{padding:22px 26px}
+#pat-content{font-size:13px;line-height:1.7;color:var(--text2)}
+.pat-controls{display:flex;gap:10px;padding:0 26px 18px;align-items:center}
+.pat-btn{padding:7px 18px;border-radius:8px;font-size:12.5px;font-weight:600;border:1px solid var(--border);color:var(--text2);background:var(--surface2);transition:all .2s}
+.pat-btn:hover{border-color:var(--pink);color:var(--pink)}
+.pat-btn.primary{background:var(--pink);border-color:var(--pink);color:#fff}
+#pat-prog{flex:1;height:4px;background:var(--surface3);border-radius:2px;overflow:hidden}
+#pat-fill{height:100%;background:linear-gradient(90deg,var(--pink),var(--accent));transition:width .4s;border-radius:2px}
+/* Decision tree */
+#decision-tree{background:var(--surface);border:1px solid var(--border2);border-radius:var(--r);padding:24px;margin-top:16px}
+.dt-q{font-size:15px;font-weight:700;color:var(--text);margin-bottom:14px}
+.dt-opts{display:flex;gap:10px;flex-wrap:wrap}
+.dt-opt{padding:9px 18px;border-radius:8px;font-size:13px;font-weight:600;border:1px solid var(--border);color:var(--text2);background:var(--surface2);transition:all .2s;cursor:pointer}
+.dt-opt:hover{border-color:var(--pink);color:var(--pink)}
+.dt-opt.selected{background:var(--pink);border-color:var(--pink);color:#fff}
+.dt-result{margin-top:18px;animation:fadeIn .3s ease}
+.dt-badge{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:700;padding:8px 16px;border-radius:8px;margin-bottom:10px}
+/* Lab terminal */
+#lab-terminal{background:#000;border:1px solid #222;border-radius:var(--r);padding:18px;font-family:monospace;font-size:12px;margin-top:14px;max-height:400px;overflow-y:auto;min-height:140px}
+.tl{line-height:1.8;white-space:pre-wrap}
+.t-sys{color:var(--text3)}
+.t-planner{color:var(--cyan)}
+.t-coder{color:var(--green)}
+.t-reviewer{color:var(--amber)}
+.t-orch{color:var(--pink)}
+.t-ok{color:var(--accent2);font-weight:700;background:rgba(99,102,241,.1);padding:2px 6px;border-radius:4px;display:inline-block}
+.t-good{color:var(--green)}
+/* Handoff JSON viz */
+.json-box{background:var(--bg);border:1px solid var(--border2);border-radius:var(--r2);padding:16px;font-family:monospace;font-size:12px;margin-top:10px;position:relative}
+.json-key{color:var(--accent2)}
+.json-val{color:var(--green)}
+.json-num{color:var(--amber)}
+/* Challenge cards (clickable reveal) */
+.challenge-card{background:var(--surface);border:1px solid var(--border2);border-radius:var(--r);padding:20px;cursor:pointer;transition:all .2s}
+.challenge-card:hover{border-color:var(--border);box-shadow:var(--glow)}
+.challenge-card .cc-answer{display:none;margin-top:12px;font-size:12.5px;color:var(--text2);border-top:1px solid var(--border2);padding-top:12px;line-height:1.6}
+.challenge-card.open .cc-answer{display:block;animation:fadeIn .2s ease}
+.challenge-card .cc-hint{font-size:10px;color:var(--text3);margin-top:8px}
+.challenge-card .cc-hint::before{content:"▼ "}
+.challenge-card.open .cc-hint::before{content:"▲ "}
+/* Scrollbar */
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:var(--surface)}
+::-webkit-scrollbar-thumb{background:var(--surface3);border-radius:3px}
+</style>
+</head>
+<body>
+<div id="app">
+<nav id="nav">
+  <div id="nav-logo">
+    <div class="logo-badge"><div class="dot"></div><h1>GenAI Day 2 · Block 3&amp;4</h1></div>
+    <p>Multi-Agent Systems</p>
+  </div>
+  <div id="nav-items">
+    <div class="nav-item active" data-s="s-hero"><span class="nav-icon">🏠</span><span>Home</span></div>
+    <div class="nav-item" data-s="s-what"><span class="nav-num">1</span><span>What is MAS?</span></div>
+    <div class="nav-item" data-s="s-why"><span class="nav-num">2</span><span>Why MAS? When Not?</span></div>
+    <div class="nav-item" data-s="s-blocks"><span class="nav-num">3</span><span>Architecture Blocks</span></div>
+    <div class="nav-item" data-s="s-patterns"><span class="nav-num">4</span><span>Patterns Step-Through</span></div>
+    <div class="nav-item" data-s="s-chooser"><span class="nav-num">5</span><span>Pattern Chooser</span></div>
+    <div class="nav-item" data-s="s-orch"><span class="nav-num">6</span><span>Orchestrator &amp; Handoffs</span></div>
+    <div class="nav-item" data-s="s-frameworks"><span class="nav-num">7</span><span>Frameworks</span></div>
+    <div class="nav-item" data-s="s-challenges"><span class="nav-num">8</span><span>Challenges</span></div>
+    <div class="nav-item" data-s="s-lab"><span class="nav-num">9</span><span>Lab: Bug Fix Crew</span></div>
+    <div class="nav-item" data-s="s-handson"><span class="nav-num">10</span><span>Hands-On Paths</span></div>
+  </div>
+  <div id="nav-footer">
+    <div>Progress</div>
+    <div id="progress-bar"><div id="progress-fill" style="width:9%"></div></div>
+  </div>
+</nav>
+<div id="main">
+
+<!-- ═══ HERO ═══ -->
+<section id="s-hero" class="section active">
+  <div class="hero-badge">🤝 Block 3 &amp; 4 · Multi-Agent Systems · Deloitte Day 2</div>
+  <h1 class="hero-title">Many Agents,<br>One Goal</h1>
+  <p class="hero-sub">Learn how specialist agents coordinate, communicate, and collaborate — then build a 3-agent software fix crew in the live lab.</p>
+  <div class="hero-chips">
+    <div class="hero-chip" onclick="nav('s-what')">What is MAS?</div>
+    <div class="hero-chip" onclick="nav('s-why')">Why &amp; When Not</div>
+    <div class="hero-chip" onclick="nav('s-blocks')">Architecture Blocks</div>
+    <div class="hero-chip" onclick="nav('s-patterns')">Sequential / Parallel / Hierarchical</div>
+    <div class="hero-chip" onclick="nav('s-chooser')">Pattern Chooser</div>
+    <div class="hero-chip" onclick="nav('s-orch')">Orchestrator &amp; Handoffs</div>
+    <div class="hero-chip" onclick="nav('s-frameworks')">CrewAI · LangGraph · AutoGen</div>
+    <div class="hero-chip" onclick="nav('s-challenges')">Challenges</div>
+    <div class="hero-chip" onclick="nav('s-lab')">Bug Fix Crew Lab</div>
+    <div class="hero-chip" onclick="nav('s-handson')">Hands-On Paths</div>
+  </div>
+  <button class="hero-cta" onclick="nav('s-what')">Start Learning →</button>
+  <div class="hero-stats">
+    <div><div class="hs-num">10</div><div class="hs-label">Modules</div></div>
+    <div><div class="hs-num">3</div><div class="hs-label">Patterns</div></div>
+    <div><div class="hs-num">3</div><div class="hs-label">Frameworks</div></div>
+    <div><div class="hs-num">1</div><div class="hs-label">Live Crew Lab</div></div>
+  </div>
+</section>
+
+<!-- ═══ MODULE 1: WHAT IS MAS ═══ -->
+<section id="s-what" class="section">
+  <div class="sec-header">
+    <div class="sec-tag">Module 1</div>
+    <h2 class="sec-title">What is a Multi-Agent System?</h2>
+    <p class="sec-sub">Flip each card to see the contrast. Click again to flip back.</p>
+  </div>
+  <div class="cards-grid c2" style="margin-bottom:18px">
+    <div class="flip-wrap" onclick="this.classList.toggle('flipped')">
+      <div class="flip-inner">
+        <div class="flip-front">
+          <div class="tag tc">Single Agent</div>
+          <div class="card-icon">🤖</div>
+          <div class="card-title">One loop, many tools</div>
+          <div class="card-body">One agent handles everything. Great for focused workflows like the VPN lab. Breaks when prompt/tool list grows too large.</div>
+          <div class="flip-hint">flip to see where it fails</div>
+        </div>
+        <div class="flip-back">
+          <div class="tag tr">Failure Modes</div>
+          <div class="card-body" style="margin-top:8px">✗ Prompt overloaded with conflicting roles<br>✗ Tool list too long → LLM picks wrong tool<br>✗ Can't parallelize research paths<br>✗ No clear owner of the final answer</div>
+          <div class="flip-hint">flip back</div>
+        </div>
+      </div>
+    </div>
+    <div class="flip-wrap" onclick="this.classList.toggle('flipped')">
+      <div class="flip-inner">
+        <div class="flip-front">
+          <div class="tag tp">Multi-Agent System</div>
+          <div class="card-icon">🤝</div>
+          <div class="card-title">Several role-bound agents</div>
+          <div class="card-body">Agents collaborate via messages, handoffs, or shared state. Each has a narrow role, scoped tools, and a clear output contract.</div>
+          <div class="flip-hint">flip for the definition</div>
+        </div>
+        <div class="flip-back">
+          <div class="tag tp">Working Definition</div>
+          <div class="card-body" style="margin-top:8px"><strong style="color:var(--text)">A MAS is a set of agents that collaborate — via messages, handoffs, or shared state — to complete work that is hard for one overloaded agent.</strong><br><br>Someone must own sequencing, stop rules, and the final answer.</div>
+          <div class="flip-hint">flip back</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="hbox"><strong>Rule of thumb:</strong> Split into multiple agents when <em>roles, tools, or success criteria diverge</em>. If you can't name distinct specialists, stay single-agent.</div>
+  <div class="divider"></div>
+  <div class="label">Real Deloitte Multi-Agent Examples</div>
+  <div class="cards-grid c4 mt8">
+    <div class="card"><div class="card-icon">🔬</div><div class="card-title">Research Automation</div><div class="card-body">Researcher → Writer → Reviewer pipeline. Each specialist has its own tools and style.</div></div>
+    <div class="card"><div class="card-icon">💻</div><div class="card-title">Software Dev Teams</div><div class="card-body">Planner → Coder → Reviewer. Today's Block 4 lab. Mirrors how real dev teams work.</div></div>
+    <div class="card"><div class="card-icon">📊</div><div class="card-title">Financial Analysis</div><div class="card-body">Parallel specialists for news, competitors, pricing — then a synthesizer merges outputs.</div></div>
+    <div class="card"><div class="card-icon">🎫</div><div class="card-title">IT Support Desk</div><div class="card-body">Hierarchical: Manager routes tickets to Network, IAM, or Knowledge agents.</div></div>
+  </div>
+</section>
+
+<!-- ═══ MODULE 2: WHY / WHEN NOT ═══ -->
+<section id="s-why" class="section">
+  <div class="sec-header">
+    <div class="sec-tag">Module 2</div>
+    <h2 class="sec-title">Why MAS? And When NOT to Use It</h2>
+    <p class="sec-sub">Understanding both sides prevents over-engineering. Flip the "When NOT" cards to reveal common traps.</p>
+  </div>
+  <div class="tab-bar">
+    <div class="tab-btn active" onclick="switchTab(this,'why-yes')">✅ Why MAS</div>
+    <div class="tab-btn" onclick="switchTab(this,'why-no')">⛔ When NOT to Use</div>
+  </div>
+  <div id="tab-why-yes" class="tab-pane active">
+    <div class="cards-grid c3">
+      <div class="card" style="border-color:var(--green)">
+        <div class="tag tg">Specialization</div>
+        <div class="card-icon mt8">🎯</div>
+        <div class="card-title">Different skills per agent</div>
+        <div class="card-body">Different prompts, different tool permissions, easier unit testing of each role. Mirrors how real teams work in Deloitte engagements.</div>
+      </div>
+      <div class="card" style="border-color:var(--cyan)">
+        <div class="tag tc">Parallelism</div>
+        <div class="card-icon mt8">⚡</div>
+        <div class="card-title">Scale the work</div>
+        <div class="card-body">Parallel research paths, stage pipelines, reuse specialists across flows, independent retries per role. Speed up broad scan tasks dramatically.</div>
+      </div>
+      <div class="card" style="border-color:var(--amber)">
+        <div class="tag tam">Risk Containment</div>
+        <div class="card-icon mt8">🛡️</div>
+        <div class="card-title">Narrower blast radius</div>
+        <div class="card-body">Risky tools on one designated agent. Approver as a separate role. Clear escalation owner. Each agent only sees what it needs — no accidental privilege escalation.</div>
+      </div>
+    </div>
+    <div class="hbox mt16"><strong>Key insight:</strong> In regulated environments like Deloitte's audit and IT practices, risk containment is the primary driver for multi-agent architecture — not speed.</div>
+  </div>
+  <div id="tab-why-no" class="tab-pane">
+    <div class="cards-grid c3" style="margin-bottom:4px">
+      <div class="flip-wrap" onclick="this.classList.toggle('flipped')">
+        <div class="flip-inner">
+          <div class="flip-front"><div class="tag tr">Trap 1</div><div class="card-icon mt8">🔁</div><div class="card-title">Simple tool loop</div><div class="card-body">One clear workflow with few tools — adding agents just adds overhead with no benefit.</div><div class="flip-hint">flip for decision rule</div></div>
+          <div class="flip-back"><div class="tag tg">✓ Decision Rule</div><div class="card-body" style="margin-top:8px">If you can describe the whole workflow in 3–4 tool calls with no role conflicts, <strong style="color:var(--text)">stay single-agent</strong>. Example: VPN diagnosis with 6 tools is still single-agent territory.</div></div>
+        </div>
+      </div>
+      <div class="flip-wrap" onclick="this.classList.toggle('flipped')">
+        <div class="flip-inner">
+          <div class="flip-front"><div class="tag tr">Trap 2</div><div class="card-icon mt8">🌫️</div><div class="card-title">No clear roles</div><div class="card-body">If you cannot name distinct specialists with different success criteria, you'll just get agents that chatter endlessly.</div><div class="flip-hint">flip for decision rule</div></div>
+          <div class="flip-back"><div class="tag tg">✓ Decision Rule</div><div class="card-body" style="margin-top:8px">Can you write a separate system prompt for each agent that has zero overlap? If no → one agent. <strong style="color:var(--text)">Name the roles before writing code.</strong></div></div>
+        </div>
+      </div>
+      <div class="flip-wrap" onclick="this.classList.toggle('flipped')">
+        <div class="flip-inner">
+          <div class="flip-front"><div class="tag tr">Trap 3</div><div class="card-icon mt8">⏱️</div><div class="card-title">Hard latency / cost caps</div><div class="card-body">Parallel crews multiply tokens and API wait time. Multi-agent can be 3–5× more expensive.</div><div class="flip-hint">flip for decision rule</div></div>
+          <div class="flip-back"><div class="tag tg">✓ Decision Rule</div><div class="card-body" style="margin-top:8px">Profile single-agent first. Add parallelism only when you have a measured bottleneck. <strong style="color:var(--text)">Premature parallelism = expensive bugs.</strong></div></div>
+        </div>
+      </div>
+      <div class="flip-wrap" onclick="this.classList.toggle('flipped')">
+        <div class="flip-inner">
+          <div class="flip-front"><div class="tag tr">Trap 4</div><div class="card-icon mt8">♾️</div><div class="card-title">Missing stop rules</div><div class="card-body">Without max turns / termination conditions, groups wander and rack up cost.</div><div class="flip-hint">flip for fix</div></div>
+          <div class="flip-back"><div class="tag tg">✓ Fix</div><div class="card-body" style="margin-top:8px">Always define: max turns per agent, termination signal, and escalation path. In the lab: MAX_REVIEW_LOOPS=1, review decision is either approve or request_changes.</div></div>
+        </div>
+      </div>
+      <div class="flip-wrap" onclick="this.classList.toggle('flipped')">
+        <div class="flip-inner">
+          <div class="flip-front"><div class="tag tr">Trap 5</div><div class="card-icon mt8">❓</div><div class="card-title">Unowned final answer</div><div class="card-body">If no single agent is responsible for assembling and signing off the result, the output quality degrades.</div><div class="flip-hint">flip for fix</div></div>
+          <div class="flip-back"><div class="tag tg">✓ Fix</div><div class="card-body" style="margin-top:8px"><strong style="color:var(--text)">Someone must be the output owner.</strong> In Bug Fix Crew: Reviewer owns the final decision. In hierarchical ITSM: Manager closes the ticket. Never leave it implicit.</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ MODULE 3: ARCHITECTURE BLOCKS ═══ -->
+<section id="s-blocks" class="section">
+  <div class="sec-header">
+    <div class="sec-tag">Module 3</div>
+    <h2 class="sec-title">Architecture Building Blocks</h2>
+    <p class="sec-sub">Design these 4 dimensions before picking any framework. Click each block to expand.</p>
+  </div>
+  <div class="cards-grid c2">
+    <div class="challenge-card" onclick="this.classList.toggle('open')">
+      <div class="tag tp">Roles</div>
+      <div class="card-title mt8">Name each agent's job</div>
+      <div class="card-body">The most important design decision. Each agent needs a name, one job, success criteria, and allowed tools only.</div>
+      <div class="cc-answer">
+        <strong style="color:var(--text)">Role Design Checklist:</strong><br><br>
+        ✓ Can you write a one-sentence job description?<br>
+        ✓ Can you name the tools each agent is allowed to use?<br>
+        ✓ What does a successful output look like for this role?<br>
+        ✓ Does any other agent overlap in responsibility?<br><br>
+        <strong style="color:var(--pink)">Example:</strong> Planner → get_bug_report, list_repo_files only. Coder → read_file, propose_patch only. Reviewer → run_checks, submit_review only.
+      </div>
+      <div class="cc-hint">click to expand</div>
+    </div>
+    <div class="challenge-card" onclick="this.classList.toggle('open')">
+      <div class="tag tc">Communication</div>
+      <div class="card-title mt8">How agents pass information</div>
+      <div class="card-body">Handoff message, shared state object, group chat, or graph edges. The choice drives your framework selection.</div>
+      <div class="cc-answer">
+        <strong style="color:var(--text)">Communication Modes:</strong><br><br>
+        📨 <strong>Handoff message</strong> — structured JSON passed explicitly (Bug Fix Crew)<br>
+        🗄️ <strong>Shared state</strong> — LangGraph state dict that all nodes read/write<br>
+        💬 <strong>Group chat</strong> — AutoGen's conversation model, speaker rules<br>
+        🕸️ <strong>Graph edges</strong> — conditional routing in LangGraph<br><br>
+        Rule: the tighter the contract, the more reliable the handoff.
+      </div>
+      <div class="cc-hint">click to expand</div>
+    </div>
+    <div class="challenge-card" onclick="this.classList.toggle('open')">
+      <div class="tag tam">Control</div>
+      <div class="card-title mt8">Who starts, stops, approves</div>
+      <div class="card-body">Orchestrator owns sequencing. Must define: who starts the crew, who approves risky actions, and what the stop conditions are.</div>
+      <div class="cc-answer">
+        <strong style="color:var(--text)">Control Checklist:</strong><br><br>
+        ✓ Entry point: which agent runs first?<br>
+        ✓ Sequencing: fixed order or dynamic routing?<br>
+        ✓ Stop conditions: max turns, termination signal<br>
+        ✓ Approval gates: which actions need human sign-off?<br>
+        ✓ Escalation path: what happens if a step fails?<br><br>
+        <strong style="color:var(--pink)">In today's lab:</strong> Orchestrator pauses after each agent and waits for learner to type "okay" — explicit HITL between every phase.
+      </div>
+      <div class="cc-hint">click to expand</div>
+    </div>
+    <div class="challenge-card" onclick="this.classList.toggle('open')">
+      <div class="tag tg">Observability</div>
+      <div class="card-title mt8">Trace, log, audit</div>
+      <div class="card-body">Trace per agent, tool call logs, final audit trail. Often forgotten in demos — essential for enterprise sign-off.</div>
+      <div class="cc-answer">
+        <strong style="color:var(--text)">Observability Requirements:</strong><br><br>
+        📊 Per-agent trace: what did each agent think and do?<br>
+        🔧 Tool call log: every tool name, args, result, timestamp<br>
+        📝 Final audit: structured record of the whole crew run<br>
+        🗄️ Persistent storage: SQLite in lab, Jira/ADO in production<br><br>
+        <strong style="color:var(--pink)">In today's lab:</strong> Every patch and review is written to SQLite. The faculty checklist asks you to run B1c (inspect DB) after each crew phase to see what was written.
+      </div>
+      <div class="cc-hint">click to expand</div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ MODULE 4: PATTERNS ═══ -->
+<section id="s-patterns" class="section">
+  <div class="sec-header">
+    <div class="sec-tag">Module 4</div>
+    <h2 class="sec-title">The Three Coordination Patterns</h2>
+    <p class="sec-sub">Step through each pattern. Click tabs or Prev/Next to navigate.</p>
+  </div>
+  <div id="pat-demo">
+    <div id="pat-tabs">
+      <div class="pat-tab active" id="ptab-0" onclick="patGo(0)">📜 Sequential</div>
+      <div class="pat-tab" id="ptab-1" onclick="patGo(1)">📜 Seq: Example</div>
+      <div class="pat-tab" id="ptab-2" onclick="patGo(2)">⚡ Parallel</div>
+      <div class="pat-tab" id="ptab-3" onclick="patGo(3)">⚡ Par: Example</div>
+      <div class="pat-tab" id="ptab-4" onclick="patGo(4)">🏛️ Hierarchical</div>
+      <div class="pat-tab" id="ptab-5" onclick="patGo(5)">🏛️ Hier: Example</div>
+      <div class="pat-tab" id="ptab-6" onclick="patGo(6)">📊 Compare</div>
+    </div>
+    <div id="pat-body"><div id="pat-content"></div></div>
+    <div class="pat-controls">
+      <button class="pat-btn" onclick="patPrev()">← Prev</button>
+      <div id="pat-prog"><div id="pat-fill"></div></div>
+      <button class="pat-btn primary" onclick="patNext()" id="pat-next-btn">Next →</button>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ MODULE 5: PATTERN CHOOSER ═══ -->
+<section id="s-chooser" class="section">
+  <div class="sec-header">
+    <div class="sec-tag">Module 5</div>
+    <h2 class="sec-title">Pattern Chooser</h2>
+    <p class="sec-sub">Answer 3 questions to get a recommended pattern for your use case.</p>
+  </div>
+  <div id="decision-tree">
+    <div id="dt-step1">
+      <div class="dt-q">Q1: Do the sub-tasks depend on each other's output?</div>
+      <div class="dt-opts">
+        <div class="dt-opt" onclick="dtAnswer(1,'yes')">Yes — each step needs the previous result</div>
+        <div class="dt-opt" onclick="dtAnswer(1,'no')">No — tasks can run independently</div>
+      </div>
+    </div>
+    <div id="dt-step2" style="display:none;margin-top:18px">
+      <div class="dt-q">Q2: Is there a policy owner or approval gate above the specialists?</div>
+      <div class="dt-opts">
+        <div class="dt-opt" onclick="dtAnswer(2,'yes')">Yes — someone approves, routes, or escalates</div>
+        <div class="dt-opt" onclick="dtAnswer(2,'no')">No — agents are equal peers</div>
+      </div>
+    </div>
+    <div id="dt-result" style="display:none"></div>
+    <button class="pat-btn" style="margin-top:16px" onclick="dtReset()">↺ Reset</button>
+  </div>
+  <div class="divider"></div>
+  <div class="label">Quick Reference</div>
+  <div class="cards-grid c3 mt8">
+    <div class="card" style="border-color:var(--cyan)">
+      <div class="tag tc">Sequential</div>
+      <div class="card-title mt8">Choose when…</div>
+      <div class="card-body">✓ Stages depend on prior output<br>✓ You want simple audit trails<br>✓ Quality &gt; raw speed<br><em style="color:var(--text3)">e.g. Research → Write → Review</em></div>
+    </div>
+    <div class="card" style="border-color:var(--green)">
+      <div class="tag tg">Parallel</div>
+      <div class="card-title mt8">Choose when…</div>
+      <div class="card-body">✓ Subtasks are independent<br>✓ Breadth scan then merge<br>✓ You can afford merge cost<br><em style="color:var(--text3)">e.g. News + Competitors + Pricing scan</em></div>
+    </div>
+    <div class="card" style="border-color:var(--pink)">
+      <div class="tag tp">Hierarchical</div>
+      <div class="card-title mt8">Choose when…</div>
+      <div class="card-body">✓ Policy / approval sits above<br>✓ Many specialists, one owner<br>✓ Escalation paths matter<br><em style="color:var(--text3)">e.g. IT desk: Manager routes to specialist</em></div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ MODULE 6: ORCHESTRATOR & HANDOFFS ═══ -->
+<section id="s-orch" class="section">
+  <div class="sec-header">
+    <div class="sec-tag">Module 6</div>
+    <h2 class="sec-title">Orchestrator &amp; Handoff Contracts</h2>
+    <p class="sec-sub">The orchestrator owns policy. Handoff contracts create trust between agents. Flip cards to see good vs bad patterns.</p>
+  </div>
+  <div class="cards-grid c2" style="margin-bottom:18px">
+    <div class="card" style="border-color:var(--accent)">
+      <div class="tag ta">🎯 Orchestrator Role</div>
+      <div class="step-list">
+        <div class="step-item"><div class="step-num">1</div><div><div class="step-title">Owns the user goal</div><div class="step-desc">Receives the original request, keeps track of overall progress</div></div></div>
+        <div class="step-item"><div class="step-num">2</div><div><div class="step-title">Picks next agent / branch</div><div class="step-desc">Decides routing, enforces sequential or conditional logic</div></div></div>
+        <div class="step-item"><div class="step-num">3</div><div><div class="step-title">Enforces approvals &amp; stops</div><div class="step-desc">Owns the HITL gate. Max turns. Escalation path.</div></div></div>
+        <div class="step-item"><div class="step-num">4</div><div><div class="step-title">Returns final answer</div><div class="step-desc">Assembles sub-agent results into a coherent output</div></div></div>
+      </div>
+      <div class="hbox"><strong>Golden rule:</strong> Don't give every agent every tool. Only the orchestrator owns policy decisions.</div>
+    </div>
+    <div>
+      <div class="cards-grid c2" style="margin-bottom:14px">
+        <div class="flip-wrap" onclick="this.classList.toggle('flipped')" style="height:190px">
+          <div class="flip-inner">
+            <div class="flip-front"><div class="tag tr">Bad Handoff</div><div class="card-body" style="margin-top:8px;font-size:12px">❌ Free-text dump only<br>❌ Missing ids / evidence<br>❌ Hidden assumptions<br>❌ "Looks fine" with no proof<br>❌ Next agent re-does all work</div><div class="flip-hint">flip for fix</div></div>
+            <div class="flip-back"><div class="tag tg">✓ Fix</div><div class="card-body" style="margin-top:8px;font-size:12px">Use a schema + validator before the next agent runs. Every handoff must have: ticket_id, evidence fields, confidence level, and recommended next action.</div></div>
+          </div>
+        </div>
+        <div class="flip-wrap" onclick="this.classList.toggle('flipped')" style="height:190px">
+          <div class="flip-inner">
+            <div class="flip-front"><div class="tag tg">Good Handoff</div><div class="card-body" style="margin-top:8px;font-size:12px">✓ Goal remnant (what still matters)<br>✓ Structured fields (ids, status)<br>✓ Evidence already obtained<br>✓ Confidence / unknowns stated<br>✓ Recommended next action</div><div class="flip-hint">flip for example</div></div>
+            <div class="flip-back"><div class="tag tg">Example JSON</div><div class="json-box" style="margin-top:8px;font-size:11px"><span class="json-key">"ticket_id"</span>: <span class="json-val">"INC-10422"</span>,<br><span class="json-key">"user_id"</span>: <span class="json-val">"priya.n"</span>,<br><span class="json-key">"finding"</span>: <span class="json-val">"vpn_disabled"</span>,<br><span class="json-key">"confidence"</span>: <span class="json-num">0.95</span>,<br><span class="json-key">"next"</span>: <span class="json-val">"reset_with_approval"</span></div></div>
+          </div>
+        </div>
+      </div>
+      <div class="label">Bug Fix Crew Handoffs</div>
+      <div class="json-box mt8">
+<span class="json-key"># Planner → Coder handoff</span>
+{ <span class="json-key">"bug_id"</span>: <span class="json-val">"BUG-1048"</span>,
+  <span class="json-key">"root_files"</span>: [<span class="json-val">"useLoginState.ts"</span>, <span class="json-val">"LoginForm.tsx"</span>],
+  <span class="json-key">"hypothesis"</span>: <span class="json-val">"isLocked never cleared on failure"</span> }
+
+<span class="json-key"># Coder → Reviewer handoff</span>
+{ <span class="json-key">"bug_id"</span>: <span class="json-val">"BUG-1048"</span>,
+  <span class="json-key">"patch_file"</span>: <span class="json-val">"useLoginState.ts"</span>,
+  <span class="json-key">"summary"</span>: <span class="json-val">"Clear isLocked after failed attempt"</span>,
+  <span class="json-key">"diff_stored"</span>: <span class="kw">true</span> }</div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ MODULE 7: FRAMEWORKS ═══ -->
+<section id="s-frameworks" class="section">
+  <div class="sec-header">
+    <div class="sec-tag">Module 7</div>
+    <h2 class="sec-title">Frameworks for Multi-Agent Systems</h2>
+    <p class="sec-sub">Click a framework to explore its mental model, strengths, watch-outs, and code pattern.</p>
+  </div>
+  <div id="fw-sel">
+    <div class="fw-tab active" onclick="switchFw(this,'fw-crewai')">👥 CrewAI</div>
+    <div class="fw-tab" onclick="switchFw(this,'fw-langgraph')">🕸️ LangGraph</div>
+    <div class="fw-tab" onclick="switchFw(this,'fw-autogen')">🤖 AutoGen</div>
+  </div>
+  <div id="fw-crewai" class="fw-panel active"><div class="fw-detail">
+    <div class="fw-header"><div class="fw-emoji">👥</div><div>
+      <div class="fw-name">CrewAI</div>
+      <div class="fw-tagline">Role-based crews. Agents + Tasks + Process. Business-friendly and fast to prototype.</div>
+      <div class="fw-chips"><span class="fw-chip tp">Role-Based</span><span class="fw-chip tg">Sequential</span><span class="fw-chip tam">Hierarchical</span><span class="fw-chip tc">Fast Prototype</span></div>
+    </div></div>
+    <div class="hbox" style="margin-bottom:14px"><strong>Mental model:</strong> Crew = team · Agent = role + goal + tools · Task = work unit · Process = sequential or hierarchical execution</div>
+    <div class="fw-pc">
+      <div><div class="fw-list-title pros">Strengths</div><ul class="fw-list pros"><li>Fast role prototyping</li><li>Business-friendly language</li><li>Maps to real org job titles</li><li>Great for demos &amp; POCs</li><li>Natural teaching surface</li></ul></div>
+      <div><div class="fw-list-title cons">Watch-outs</div><ul class="fw-list cons"><li>Less graph-level control</li><li>State can feel opaque</li><li>Vague tasks → drift</li><li>Not ideal for hard approval gates</li></ul></div>
+    </div>
+    <div class="fw-code"><span class="kw">from</span> crewai <span class="kw">import</span> Agent, Task, Crew
+
+researcher = <span class="fn">Agent</span>(role=<span class="str">"Research Analyst"</span>,
+    goal=<span class="str">"Find root cause of BUG-1048"</span>,
+    tools=[get_bug_report, list_repo_files])
+
+coder = <span class="fn">Agent</span>(role=<span class="str">"Software Engineer"</span>,
+    goal=<span class="str">"Fix the login button bug"</span>,
+    tools=[read_file, propose_patch])
+
+task1 = <span class="fn">Task</span>(description=<span class="str">"Analyse BUG-1048"</span>, agent=researcher)
+task2 = <span class="fn">Task</span>(description=<span class="str">"Propose a patch"</span>, agent=coder)
+
+<span class="fn">Crew</span>(agents=[researcher, coder], tasks=[task1, task2]).<span class="fn">kickoff</span>()</div>
+  </div></div>
+  <div id="fw-langgraph" class="fw-panel"><div class="fw-detail">
+    <div class="fw-header"><div class="fw-emoji">🕸️</div><div>
+      <div class="fw-name">LangGraph</div>
+      <div class="fw-tagline">Stateful agent graph. Nodes, edges, shared state, conditional routing, explicit loops.</div>
+      <div class="fw-chips"><span class="fw-chip ta">Stateful</span><span class="fw-chip tp">Cycles</span><span class="fw-chip tam">HITL</span><span class="fw-chip tg">Checkpoints</span><span class="fw-chip tc">Audit</span></div>
+    </div></div>
+    <div class="hbox" style="margin-bottom:14px"><strong>Mental model:</strong> Node = agent/tool/gate · Edge = transition · State = shared memory · Conditionals = routing · Human node = approval gate</div>
+    <div class="fw-pc">
+      <div><div class="fw-list-title pros">Strengths</div><ul class="fw-list pros"><li>High observability</li><li>Regulated / audit flows</li><li>Approval &amp; escalation paths</li><li>Deterministic stop rules</li><li>Best for enterprise control</li></ul></div>
+      <div><div class="fw-list-title cons">Watch-outs</div><ul class="fw-list cons"><li>More design upfront</li><li>Steeper learning curve</li><li>You own the graph design</li><li>Overkill for simple demos</li></ul></div>
+    </div>
+    <div class="fw-code"><span class="kw">from</span> langgraph.graph <span class="kw">import</span> StateGraph, END
+
+graph = <span class="fn">StateGraph</span>(CrewState)
+graph.<span class="fn">add_node</span>(<span class="str">"planner"</span>, run_planner)
+graph.<span class="fn">add_node</span>(<span class="str">"coder"</span>, run_coder)
+graph.<span class="fn">add_node</span>(<span class="str">"reviewer"</span>, run_reviewer)
+graph.<span class="fn">add_node</span>(<span class="str">"human_gate"</span>, hitl_pause)  <span class="cm"># HITL</span>
+
+graph.<span class="fn">add_edge</span>(<span class="str">"planner"</span>, <span class="str">"human_gate"</span>)
+graph.<span class="fn">add_edge</span>(<span class="str">"human_gate"</span>, <span class="str">"coder"</span>)
+graph.<span class="fn">add_conditional_edges</span>(<span class="str">"reviewer"</span>, route,
+    {<span class="str">"request_changes"</span>: <span class="str">"coder"</span>, <span class="str">"approve"</span>: END})</div>
+  </div></div>
+  <div id="fw-autogen" class="fw-panel"><div class="fw-detail">
+    <div class="fw-header"><div class="fw-emoji">🤖</div><div>
+      <div class="fw-name">AutoGen (Microsoft)</div>
+      <div class="fw-tagline">Group chat patterns. Agents converse with speaker selection rules and termination conditions.</div>
+      <div class="fw-chips"><span class="fw-chip tc">Group Chat</span><span class="fw-chip tg">Code Exec</span><span class="fw-chip tam">Debate</span><span class="fw-chip tp">Review Loops</span></div>
+    </div></div>
+    <div class="hbox" style="margin-bottom:14px"><strong>Mental model:</strong> Group chat with speaker selection policy · Optional human proxy · Debate / critique loops · Termination conditions required</div>
+    <div class="fw-pc">
+      <div><div class="fw-list-title pros">Strengths</div><ul class="fw-list pros"><li>Natural multi-party talk</li><li>Great for review &amp; critique cycles</li><li>Flexible experiments</li><li>Human can jump in any time</li><li>Built-in code execution</li></ul></div>
+      <div><div class="fw-list-title cons">Watch-outs</div><ul class="fw-list cons"><li>Chatter burns tokens fast</li><li>Path less guaranteed</li><li>Needs max-turn caps always</li><li>Harder for strict compliance</li><li>Not first pick for approval gates</li></ul></div>
+    </div>
+    <div class="fw-code">planner = <span class="fn">AssistantAgent</span>(<span class="str">"planner"</span>, system_message=PLANNER_PROMPT)
+coder   = <span class="fn">AssistantAgent</span>(<span class="str">"coder"</span>,   system_message=CODER_PROMPT)
+reviewer = <span class="fn">AssistantAgent</span>(<span class="str">"reviewer"</span>, system_message=REVIEWER_PROMPT)
+human   = <span class="fn">UserProxyAgent</span>(<span class="str">"human"</span>, max_consecutive_auto_reply=<span class="nm">1</span>)
+
+groupchat = <span class="fn">GroupChat</span>(
+    agents=[planner, coder, reviewer, human],
+    max_round=<span class="nm">12</span>,                  <span class="cm"># always set a cap</span>
+    speaker_selection_method=<span class="str">"auto"</span>
+)</div>
+  </div></div>
+  <div class="divider"></div>
+  <div class="label">Framework Selection Guide</div>
+  <table class="cmp-table">
+    <thead><tr><th>Framework</th><th>MAS Shape</th><th>Choose When…</th><th>Watch-Out</th></tr></thead>
+    <tbody>
+      <tr><td>👥 CrewAI</td><td style="color:var(--pink)">Roles &amp; tasks as a crew</td><td style="color:var(--text2)">Fast role prototype, teaching demo</td><td style="color:var(--amber)">Less low-level control</td></tr>
+      <tr><td>🕸️ LangGraph</td><td style="color:var(--accent2)">Stateful agent graph</td><td style="color:var(--text2)">Control, auditability, HITL gates</td><td style="color:var(--amber)">More setup required</td></tr>
+      <tr><td>🤖 AutoGen</td><td style="color:var(--cyan)">Multi-agent conversation</td><td style="color:var(--text2)">Critique loops, debate, research</td><td style="color:var(--amber)">Needs strict stop conditions</td></tr>
+    </tbody>
+  </table>
+  <div class="hbox mt16"><strong>Deloitte IT / regulated context:</strong> LangGraph wins for anything with approval gates, audit requirements, or clear escalation paths. CrewAI wins for rapid POC demos. AutoGen wins for research analysis with critique loops.</div>
+</section>
+
+<!-- ═══ MODULE 8: CHALLENGES ═══ -->
+<section id="s-challenges" class="section">
+  <div class="sec-header">
+    <div class="sec-tag">Module 8</div>
+    <h2 class="sec-title">Challenges &amp; Mitigations</h2>
+    <p class="sec-sub">Click each challenge card to reveal the mitigation strategy.</p>
+  </div>
+  <div class="cards-grid c3">
+    <div class="challenge-card" onclick="this.classList.toggle('open')">
+      <div class="tag tp">Coordination</div>
+      <div class="card-title mt8">Who speaks next?</div>
+      <div class="card-body">Without explicit sequencing, agents can run out of order, duplicate work, or deadlock waiting for each other.</div>
+      <div class="cc-answer"><strong style="color:var(--text)">Mitigations:</strong><br><br>✓ Use an explicit orchestrator node/agent<br>✓ Define graph edges (LangGraph) or process (CrewAI)<br>✓ Set max consecutive auto-replies (AutoGen)<br>✓ Turn caps per agent (MAX_STEPS in today's lab)<br><br>In the Bug Fix Crew: CrewSession tracks waiting_for state and only advances when the learner types "okay".</div>
+      <div class="cc-hint">click for mitigation</div>
+    </div>
+    <div class="challenge-card" onclick="this.classList.toggle('open')">
+      <div class="tag tr">Trust</div>
+      <div class="card-title mt8">Can B rely on A's output?</div>
+      <div class="card-body">If Agent A returns junk or a hallucination, Agent B will build on it without knowing — cascading errors are hard to debug.</div>
+      <div class="cc-answer"><strong style="color:var(--text)">Mitigations:</strong><br><br>✓ Schema validate handoff messages before passing<br>✓ Require evidence fields (ids, source citations)<br>✓ Add a validator node between agents<br>✓ Fail fast at stage boundaries — don't silently continue<br><br>Example: run_checks in Block 4 validates the patch before Reviewer submits a decision. If no patch exists, it returns error immediately.</div>
+      <div class="cc-hint">click for mitigation</div>
+    </div>
+    <div class="challenge-card" onclick="this.classList.toggle('open')">
+      <div class="tag tam">Conflict</div>
+      <div class="card-title mt8">Contradictory outputs</div>
+      <div class="card-body">Parallel agents may return conflicting findings. Who wins? Without a resolution strategy, the final answer is undefined.</div>
+      <div class="cc-answer"><strong style="color:var(--text)">Mitigations:</strong><br><br>✓ Synthesizer agent with ranked source priority<br>✓ Human gate for unresolvable conflicts<br>✓ Explicit uncertainty field in handoff schema<br>✓ Never silently pick one — surface the conflict<br><br>Example (market scan): if Competitor says price is $X and News says price dropped — Synthesizer must mark uncertainty, not pick one silently.</div>
+      <div class="cc-hint">click for mitigation</div>
+    </div>
+    <div class="challenge-card" onclick="this.classList.toggle('open')">
+      <div class="tag tr">Cost &amp; Latency</div>
+      <div class="card-title mt8">Agents multiply token usage</div>
+      <div class="card-body">Each agent gets its own LLM calls. Parallel crews can be 3–5× more expensive than a single agent for the same task.</div>
+      <div class="cc-answer"><strong style="color:var(--text)">Mitigations:</strong><br><br>✓ Profile single-agent first, then justify parallelism<br>✓ Cache intermediate results in shared state<br>✓ Use cheaper models for simple roles (e.g. gpt-4o-mini for Planner, gpt-4o only for Reviewer)<br>✓ Hard token budgets per agent<br><br>Block 4 uses gpt-4o-mini for all roles — lower cost for a lab context.</div>
+      <div class="cc-hint">click for mitigation</div>
+    </div>
+    <div class="challenge-card" onclick="this.classList.toggle('open')">
+      <div class="tag to">Security Sprawl</div>
+      <div class="card-title mt8">Too many agents with too many tools</div>
+      <div class="card-body">Each agent that can call a tool is a potential attack surface. More agents = larger blast radius if one is compromised.</div>
+      <div class="cc-answer"><strong style="color:var(--text)">Mitigations:</strong><br><br>✓ Strict tool allow-lists per role (enforced in code)<br>✓ Secrets never in prompts — use env vars or vault<br>✓ Audit log every tool call with args and result<br>✓ HITL gate before any write/delete/reset action<br><br>Block 4: Planner only gets get_bug_report + list_repo_files. submit_review is exclusively Reviewer's tool. Enforced by the schemas_for() function.</div>
+      <div class="cc-hint">click for mitigation</div>
+    </div>
+    <div class="challenge-card" onclick="this.classList.toggle('open')">
+      <div class="tag tc">Chatter Loops</div>
+      <div class="card-title mt8">Agents talking without progress</div>
+      <div class="card-body">Especially in group-chat frameworks, agents can debate endlessly without reaching a conclusion, burning tokens.</div>
+      <div class="cc-answer"><strong style="color:var(--text)">Mitigations:</strong><br><br>✓ Always set max_round / MAX_REVIEW_LOOPS<br>✓ Require structured output (approve/request_changes — no freeform)<br>✓ Termination condition: final answer is a specific signal, not "looks done"<br>✓ In AutoGen: use termination keyword in system prompt<br><br>Block 4: MAX_REVIEW_LOOPS=1 ensures the crew terminates after at most one revision cycle, even if Reviewer keeps requesting changes.</div>
+      <div class="cc-hint">click for mitigation</div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ MODULE 9: LAB ═══ -->
+<section id="s-lab" class="section">
+  <div class="sec-header">
+    <div class="sec-tag">Module 9 — Live Lab</div>
+    <h2 class="sec-title">Bug Fix Crew: BUG-1048</h2>
+    <p class="sec-sub">A 3-agent software fix crew. Planner → Coder → Reviewer. Click Run Crew to watch it execute.</p>
+  </div>
+  <div class="row">
+    <div style="flex:0 0 270px">
+      <div class="card" style="border-color:var(--amber)">
+        <div class="tag tam">🐛 BUG-1048</div>
+        <div class="eb mt8"><span>📋</span><span><strong>Title:</strong> Login button stays disabled after failed password</span></div>
+        <div class="eb"><span>🔴</span><span><strong>Severity:</strong> P2</span></div>
+        <div class="eb"><span>👤</span><span><strong>Reporter:</strong> qa.maya</span></div>
+        <div class="eb"><span>📦</span><span><strong>Component:</strong> web/login</span></div>
+        <div class="eb"><span>🔄</span><span><strong>Steps:</strong> Enter wrong password → button stays disabled forever</span></div>
+      </div>
+      <div class="card mt16">
+        <div class="tag tg">3 Agents, Separated Tools</div>
+        <div class="eb mt8"><span>📋</span><span><strong>Planner</strong>: get_bug_report, list_repo_files</span></div>
+        <div class="eb"><span>💻</span><span><strong>Coder</strong>: read_file, propose_patch</span></div>
+        <div class="eb"><span>✅</span><span><strong>Reviewer</strong>: run_checks, submit_review</span></div>
+        <div class="eb"><span>🛑</span><span><strong>HITL</strong>: "okay" between each agent</span></div>
+      </div>
+      <div class="card mt16" style="border-color:var(--pink)">
+        <div class="tag tp">SQLite Data Layer</div>
+        <div class="eb mt8"><span>🗄️</span><span><strong>bugs</strong> — 11 seeded defects</span></div>
+        <div class="eb"><span>📁</span><span><strong>repo_files</strong> — 4 login source files</span></div>
+        <div class="eb"><span>🩹</span><span><strong>patches</strong> — written by Coder</span></div>
+        <div class="eb"><span>📝</span><span><strong>reviews</strong> — written by Reviewer</span></div>
+      </div>
+    </div>
+    <div style="flex:1">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+        <div class="label">Crew Terminal — Simulation (12s)</div>
+        <button class="pat-btn primary" onclick="runCrewSim()" id="crew-play-btn">▶ Run Crew</button>
+      </div>
+      <div id="lab-terminal">
+        <div class="tl t-sys">$ python bugfix_crew.py --bug BUG-1048</div>
+        <div class="tl" style="color:var(--text2)">Click "Run Crew" above to watch the 3-agent simulation →</div>
+      </div>
+      <div class="hbox mt16">
+        <strong>The root cause in useLoginState.ts:</strong><br>
+        <code style="font-size:12px;color:var(--red)">setIsLocked(true);</code> is called on failure but <strong>never cleared</strong>. Button stays disabled because <code style="font-size:12px;color:var(--cyan)">const disabled = isSubmitting || isLocked;</code> — once <code style="font-size:12px;color:var(--amber)">isLocked</code> is true, no path resets it without a page refresh.
+      </div>
+    </div>
+  </div>
+  <div class="divider"></div>
+  <div class="label">Why 3 Agents Instead of 1?</div>
+  <div class="cards-grid c3 mt8">
+    <div class="card" style="border-color:var(--cyan)">
+      <div class="tag tc">Tool Isolation</div>
+      <div class="card-body">Planner has no write access. Coder can't approve. Reviewer can't write code. Each role is limited to exactly what it needs — zero chance of accidental cross-role action.</div>
+    </div>
+    <div class="card" style="border-color:var(--green)">
+      <div class="tag tg">Independent Testing</div>
+      <div class="card-body">You can unit test Planner's output without running Coder. You can swap a better Reviewer model without touching Planner logic. Roles are modular.</div>
+    </div>
+    <div class="card" style="border-color:var(--pink)">
+      <div class="tag tp">Real Org Mirror</div>
+      <div class="card-body">This mirrors how real dev teams work: PM scopes, engineer codes, reviewer approves. The agent architecture maps directly to team responsibilities.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ MODULE 10: HANDS-ON ═══ -->
+<section id="s-handson" class="section">
+  <div class="sec-header">
+    <div class="sec-tag">Module 10 — Hands-On</div>
+    <h2 class="sec-title">Lab Paths &amp; Design Activity</h2>
+    <p class="sec-sub">Three lab paths plus a design activity. Pick your level.</p>
+  </div>
+  <div class="cards-grid c3">
+    <div class="card" style="border-color:var(--green)">
+      <div class="tag tg">🟢 Path A — Happy Path</div>
+      <div class="card-title mt8">Full Approve Flow</div>
+      <div class="card-body">Run BUG-1048 through all 3 agents. Type "okay" between each. Verify the patch is approved in SQLite.</div>
+      <div class="step-list">
+        <div class="step-item"><div class="step-num" style="background:var(--green)">1</div><div><div class="step-title">Open notebook</div><div class="step-desc">block4_bugfix_crew.ipynb</div></div></div>
+        <div class="step-item"><div class="step-num" style="background:var(--green)">2</div><div><div class="step-title">Run blocks A → E</div><div class="step-desc">Set OPENAI_API_KEY first</div></div></div>
+        <div class="step-item"><div class="step-num" style="background:var(--green)">3</div><div><div class="step-title">Send bug request in Gradio</div><div class="step-desc">"Please fix BUG-1048 — login button..."</div></div></div>
+        <div class="step-item"><div class="step-num" style="background:var(--green)">4</div><div><div class="step-title">Type "okay" × 2</div><div class="step-desc">After Planner, after Coder — to advance</div></div></div>
+        <div class="step-item"><div class="step-num" style="background:var(--green)">5</div><div><div class="step-title">Check SQLite (B1c)</div><div class="step-desc">Verify patch + review rows were written</div></div></div>
+      </div>
+    </div>
+    <div class="card" style="border-color:var(--amber)">
+      <div class="tag tam">🟡 Path B — Strict Reviewer</div>
+      <div class="card-title mt8">Revision Loop</div>
+      <div class="card-body">Enable "Strict reviewer" toggle in Gradio. Watch the crew loop back when Reviewer requests changes.</div>
+      <div class="step-list">
+        <div class="step-item"><div class="step-num" style="background:var(--amber)">1</div><div><div class="step-title">Tick "Strict reviewer"</div><div class="step-desc">Checkbox in Gradio sidebar</div></div></div>
+        <div class="step-item"><div class="step-num" style="background:var(--amber)">2</div><div><div class="step-title">Run same bug request</div><div class="step-desc">Same BUG-1048 starting point</div></div></div>
+        <div class="step-item"><div class="step-num" style="background:var(--amber)">3</div><div><div class="step-title">Observe request_changes</div><div class="step-desc">Reviewer rejects, Coder revises</div></div></div>
+        <div class="step-item"><div class="step-num" style="background:var(--amber)">4</div><div><div class="step-title">Type "okay" to revise</div><div class="step-desc">MAX_REVIEW_LOOPS=1 caps the loop</div></div></div>
+        <div class="step-item"><div class="step-num" style="background:var(--amber)">5</div><div><div class="step-title">Compare SQLite reviews</div><div class="step-desc">Two review rows: request_changes then approve</div></div></div>
+      </div>
+    </div>
+    <div class="card" style="border-color:var(--accent)">
+      <div class="tag ta">🔵 Path C — Design Activity</div>
+      <div class="card-title mt8">Design Your Own Crew</div>
+      <div class="card-body">Pick a real Deloitte scenario and design a multi-agent crew on paper. Then try to implement it in the notebook.</div>
+      <div class="step-list">
+        <div class="step-item"><div class="step-num">1</div><div><div class="step-title">Pick a scenario</div><div class="step-desc">IT / research / finance / audit</div></div></div>
+        <div class="step-item"><div class="step-num">2</div><div><div class="step-title">Name 2–4 agent roles</div><div class="step-desc">Each with a one-sentence job description</div></div></div>
+        <div class="step-item"><div class="step-num">3</div><div><div class="step-title">Define tools per role</div><div class="step-desc">Only what each agent needs</div></div></div>
+        <div class="step-item"><div class="step-num">4</div><div><div class="step-title">Define handoff contract</div><div class="step-desc">What JSON fields pass between agents?</div></div></div>
+        <div class="step-item"><div class="step-num">5</div><div><div class="step-title">Pick a pattern + framework</div><div class="step-desc">Sequential/Parallel/Hierarchical + why</div></div></div>
+      </div>
+    </div>
+  </div>
+  <div class="divider"></div>
+  <div class="label">Design Activity Checklist (8 min)</div>
+  <div class="cards-grid c4 mt8">
+    <div class="card"><div class="card-icon">🎯</div><div class="card-title">Goal &amp; Success</div><div class="card-body">What does "done" look like? What is the output contract for the whole crew?</div></div>
+    <div class="card"><div class="card-icon">👥</div><div class="card-title">2–4 Roles</div><div class="card-body">Name each agent. One job per agent. If roles overlap, you have too many agents.</div></div>
+    <div class="card"><div class="card-icon">🔧</div><div class="card-title">Tools Per Role</div><div class="card-body">Only what that role needs. Write the allow-list. No agent gets every tool.</div></div>
+    <div class="card"><div class="card-icon">🛑</div><div class="card-title">Stop &amp; Escalate</div><div class="card-body">Max turns, approval gates, escalation owner. Never leave stop conditions undefined.</div></div>
+  </div>
+  <div class="hbox mt16" style="border-color:var(--pink)"><strong>🏆 Stretch Challenge:</strong> Try a second bug — BUG-1049 (Forgot-password link 404) or BUG-1050 (MFA code expires too early). Can your crew handle a different component (web/auth instead of web/login)? What needs to change in the system prompts?</div>
+</section>
+
+</div>
+</div>
+
+<script>
+const allS = document.querySelectorAll('.section');
+const allN = document.querySelectorAll('.nav-item');
+function nav(id) {
+  allS.forEach(s => s.classList.remove('active'));
+  allN.forEach(n => n.classList.remove('active'));
+  const s = document.getElementById(id);
+  if(s) s.classList.add('active');
+  const n = document.querySelector('[data-s="'+id+'"]');
+  if(n) n.classList.add('active');
+  const idx = Array.from(allS).findIndex(s => s.id===id);
+  document.getElementById('progress-fill').style.width=Math.round((idx+1)/allS.length*100)+'%';
+  document.getElementById('main').scrollTop=0;
+}
+allN.forEach(n => n.addEventListener('click', () => nav(n.dataset.s)));
+function switchTab(btn, id) {
+  const sec = btn.closest('.section');
+  sec.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  sec.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+  const t = document.getElementById('tab-'+id);
+  if(t) t.classList.add('active');
+}
+function switchFw(btn, id) {
+  document.querySelectorAll('.fw-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.fw-panel').forEach(p => p.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById(id).classList.add('active');
+}
+
+// Pattern step-through
+const patSteps = [
+  {l:'📜 Sequential',c:`<strong style="color:var(--cyan)">Sequential Pattern — Stage by Stage</strong><br><br>
+One agent completes its work fully, then passes a handoff message to the next. Each stage depends on the previous output.<br><br>
+<div class="flow-row">
+  <div class="abox" style="border-color:var(--cyan)"><div class="abox-icon">🔬</div>Researcher<div class="abox-role">Finds facts</div></div>
+  <div class="arrow">→</div>
+  <div class="abox" style="border-color:var(--green)"><div class="abox-icon">✍️</div>Writer<div class="abox-role">Drafts brief</div></div>
+  <div class="arrow">→</div>
+  <div class="abox" style="border-color:var(--amber)"><div class="abox-icon">✅</div>Reviewer<div class="abox-role">Approves</div></div>
+</div>
+<div class="hbox"><strong>Use when:</strong> Stages depend on prior output · Simple audit trail needed · Quality matters more than speed</div>`},
+  {l:'📜 Seq: Example',c:`<strong style="color:var(--cyan)">Sequential Example — Today's Bug Fix Crew</strong><br><br>
+<div class="flow-row">
+  <div class="abox" style="border-color:var(--cyan)"><div class="abox-icon">📋</div>Planner<div class="abox-role">get_bug_report<br>list_repo_files</div></div>
+  <div class="arrow" style="flex-direction:column;font-size:11px">→<br><span style="color:var(--text3)">okay</span></div>
+  <div class="abox" style="border-color:var(--green)"><div class="abox-icon">💻</div>Coder<div class="abox-role">read_file<br>propose_patch</div></div>
+  <div class="arrow" style="flex-direction:column;font-size:11px">→<br><span style="color:var(--text3)">okay</span></div>
+  <div class="abox" style="border-color:var(--amber)"><div class="abox-icon">✅</div>Reviewer<div class="abox-role">run_checks<br>submit_review</div></div>
+</div>
+<div class="hbox"><strong>Why sequential here?</strong> Coder needs Planner's file list before it can read the right files. Reviewer needs a patch before it can run checks. Dependencies are clear — sequential is the right choice.<br><br><strong>HITL:</strong> Learner types "okay" between each phase — explicit human gate.</div>`},
+  {l:'⚡ Parallel',c:`<strong style="color:var(--green)">Parallel Pattern — Fan Out, Then Merge</strong><br><br>
+Independent sub-tasks run at the same time. A synthesizer agent merges results at the end.<br><br>
+<div style="display:flex;align-items:center;gap:12px;margin:16px 0">
+  <div class="abox" style="border-color:var(--accent)"><div class="abox-icon">🎯</div>Coordinator<div class="abox-role">Fans out tasks</div></div>
+  <div class="arrow" style="flex-direction:column;gap:4px">
+    <span>↗</span><span>→</span><span>↘</span>
+  </div>
+  <div style="display:flex;flex-direction:column;gap:8px">
+    <div class="abox"><div class="abox-icon">📰</div>News Agent<div class="abox-role">Headlines + tags</div></div>
+    <div class="abox"><div class="abox-icon">🏢</div>Competitor<div class="abox-role">Feature moves</div></div>
+    <div class="abox"><div class="abox-icon">💲</div>Pricing<div class="abox-role">Price points</div></div>
+  </div>
+  <div class="arrow">→</div>
+  <div class="abox" style="border-color:var(--green)"><div class="abox-icon">🔀</div>Synthesizer<div class="abox-role">Merge + dedup</div></div>
+</div>
+<div class="hbox"><strong>Use when:</strong> Tasks are independent (B doesn't need A's result) · Speed matters · Broad scan then synthesize<br><strong>Trade-off:</strong> Merge conflicts · Higher token cost · Need a synthesizer role — never skip it</div>`},
+  {l:'⚡ Par: Example',c:`<strong style="color:var(--green)">Parallel Example — Market Scan</strong><br><br>
+Deloitte M&amp;A advisory: simultaneous sector research across three independent domains.<br><br>
+<div class="cards-grid c3" style="margin:16px 0">
+  <div class="card"><div class="tag tg">News Agent</div><div class="card-body" style="font-size:12px">Recent headlines<br>Risk/opportunity tags<br>Citations required<br>No speculation</div></div>
+  <div class="card"><div class="tag tc">Competitor Agent</div><div class="card-body" style="font-size:12px">Feature moves<br>Pricing signals<br>No speculation<br>Structured output</div></div>
+  <div class="card"><div class="tag tp">Pricing Agent</div><div class="card-body" style="font-size:12px">Public price points<br>Discount patterns<br>Structured table<br>Source URLs</div></div>
+</div>
+<div class="hbox"><strong>Why parallel?</strong> News, competitor, and pricing research are fully independent — no agent needs another's result to start. Running in parallel cuts research time by ~3×.<br><br><strong>Conflict handling:</strong> If Competitor says price is $X and News says it dropped — Synthesizer marks the conflict explicitly, never silently picks one.</div>`},
+  {l:'🏛️ Hierarchical',c:`<strong style="color:var(--pink)">Hierarchical Pattern — Manager + Specialists</strong><br><br>
+A manager agent owns the goal, routes tasks to specialists, enforces policy, and closes or escalates.<br><br>
+<div style="display:flex;flex-direction:column;align-items:center;gap:12px;margin:16px 0">
+  <div class="abox" style="border-color:var(--pink);width:180px"><div class="abox-icon">👔</div>Manager<div class="abox-role">Routes · Approves · Closes</div></div>
+  <div class="arrow-vert"><span>↙↓↘</span></div>
+  <div style="display:flex;gap:12px">
+    <div class="abox"><div class="abox-icon">🌐</div>Network/VPN<div class="abox-role">Narrow tools</div></div>
+    <div class="abox"><div class="abox-icon">🔑</div>IAM/Access<div class="abox-role">Narrow tools</div></div>
+    <div class="abox"><div class="abox-icon">📚</div>Knowledge<div class="abox-role">Narrow tools</div></div>
+  </div>
+</div>
+<div class="hbox"><strong>Use when:</strong> Policy / approval sits above specialists · Escalation paths matter · Org-like support desks<br><strong>Trade-off:</strong> Manager can bottleneck · Over-centralization if manager is too broad</div>`},
+  {l:'🏛️ Hier: Example',c:`<strong style="color:var(--pink)">Hierarchical Example — IT Support Desk</strong><br><br>
+Extends the Block 2 VPN case into a full multi-team support desk.<br><br>
+<div class="cards-grid c2" style="margin:16px 0">
+  <div class="card" style="border-color:var(--pink)">
+    <div class="tag tp">Manager Agent</div>
+    <div class="card-body" style="font-size:12px;margin-top:8px">✓ Reads ticket goal<br>✓ Routes to correct specialist<br>✓ Enforces APPROVE_RESET gate<br>✓ Closes or escalates the ticket</div>
+  </div>
+  <div class="card">
+    <div class="tag tc">Specialists</div>
+    <div class="card-body" style="font-size:12px;margin-top:8px">🌐 Network/VPN agent (check_vpn_status)<br>🔑 IAM agent (check_user_account)<br>📚 Knowledge agent (search_kb)<br>Each: narrow tools only, structured output</div>
+  </div>
+</div>
+<div class="hbox"><strong>Why hierarchical?</strong> Sensitive reset_vpn_credentials must be gated by a policy owner — not held by a specialist. Specialists stay focused on their domain. Audit path is clear. Maps directly to real L1/L2 IT desk structure.</div>`},
+  {l:'📊 Compare',c:`<strong style="color:var(--accent2)">Pattern Comparison</strong><br><br>
+<table class="cmp-table" style="margin-top:8px">
+<thead><tr><th>Dimension</th><th style="color:var(--cyan)">Sequential</th><th style="color:var(--green)">Parallel</th><th style="color:var(--pink)">Hierarchical</th></tr></thead>
+<tbody>
+<tr><td>Dependency</td><td style="color:var(--text2)">Each step needs prior output</td><td style="color:var(--text2)">Tasks are independent</td><td style="color:var(--text2)">Specialist needs manager routing</td></tr>
+<tr><td>Speed</td><td style="color:var(--text2)">Slowest (serial)</td><td style="color:var(--text2)">Fastest (concurrent)</td><td style="color:var(--text2)">Medium (manager overhead)</td></tr>
+<tr><td>Audit trail</td><td style="color:var(--green)">Simplest</td><td style="color:var(--amber)">Need merge tracking</td><td style="color:var(--green)">Clear (manager owns log)</td></tr>
+<tr><td>When to choose</td><td style="color:var(--text2)">Quality pipeline</td><td style="color:var(--text2)">Broad scan + merge</td><td style="color:var(--text2)">Policy gates + escalation</td></tr>
+<tr><td>Deloitte example</td><td style="color:var(--text2)">Bug Fix Crew</td><td style="color:var(--text2)">Market research scan</td><td style="color:var(--text2)">IT support desk</td></tr>
+</tbody></table>
+<div class="hbox" style="margin-top:12px"><strong>Hybrids are common:</strong> Hierarchical outer + parallel inner workers. E.g. Manager routes to VPN specialist, which itself fans out check_vpn_status and check_user_account in parallel.</div>`}
+];
+let pIdx=0;
+function renderPat(){
+  const s=patSteps[pIdx];
+  document.getElementById('pat-content').innerHTML=s.c;
+  document.querySelectorAll('.pat-tab').forEach((t,i)=>{
+    t.classList.remove('active','done');
+    if(i<pIdx)t.classList.add('done');
+    if(i===pIdx)t.classList.add('active');
+  });
+  document.getElementById('pat-fill').style.width=((pIdx+1)/patSteps.length*100)+'%';
+  document.getElementById('pat-next-btn').textContent=pIdx===patSteps.length-1?'↺ Restart':'Next →';
+}
+function patNext(){pIdx=(pIdx+1)%patSteps.length;renderPat();}
+function patPrev(){pIdx=(pIdx-1+patSteps.length)%patSteps.length;renderPat();}
+function patGo(i){pIdx=i;renderPat();}
+renderPat();
+
+// Decision tree
+let dtA1='';
+function dtAnswer(q, ans) {
+  if(q===1){
+    dtA1=ans;
+    document.querySelectorAll('#dt-step1 .dt-opt').forEach(o=>{
+      o.classList.toggle('selected', o.textContent.startsWith(ans==='yes'?'Yes':'No'));
+    });
+    document.getElementById('dt-step2').style.display='block';
+  } else {
+    const dtA2=ans;
+    const result = document.getElementById('dt-result');
+    result.style.display='block';
+    let rec='', why='', color='';
+    if(dtA1==='yes' && dtA2==='yes'){
+      rec='🏛️ Hierarchical'; why='You have dependent stages AND a policy owner above. Classic hierarchical — manager routes, controls approvals, closes or escalates.'; color='var(--pink)';
+    } else if(dtA1==='yes' && dtA2==='no'){
+      rec='📜 Sequential'; why='Stages depend on each other and there is no approval owner above. A clean sequential pipeline with the last agent as the output owner.'; color='var(--cyan)';
+    } else if(dtA1==='no' && dtA2==='yes'){
+      rec='🏛️ Hierarchical (with parallel workers)'; why='Tasks are independent but a manager needs to route and merge. Use hierarchical outer with parallel worker agents inside.'; color='var(--pink)';
+    } else {
+      rec='⚡ Parallel'; why='Tasks are independent with no policy gate above. Classic parallel fan-out. Make sure you have a synthesizer agent to merge results.'; color='var(--green)';
+    }
+    result.innerHTML=`<div class="dt-result"><div class="dt-badge" style="background:rgba(99,102,241,.1);border:1px solid var(--border);color:${color}">Recommended: ${rec}</div><div class="card-body">${why}</div></div>`;
+  }
+}
+function dtReset(){
+  dtA1='';
+  document.querySelectorAll('.dt-opt').forEach(o=>o.classList.remove('selected'));
+  document.getElementById('dt-step2').style.display='none';
+  document.getElementById('dt-result').style.display='none';
+}
+
+// Crew simulation
+const crewLines=[
+  {c:'t-sys',t:'$ python bugfix_crew.py --bug BUG-1048',d:0},
+  {c:'t-sys',t:'Initializing Bug Fix Crew (gpt-4o-mini)...',d:400},
+  {c:'t-sys',t:'SQLite: bugfix.db — 11 bugs · 4 repo files',d:700},
+  {c:'t-sys',t:'──────────────────────────────────────',d:1000},
+  {c:'t-planner',t:'[1/3 PLANNER] 💭 Thought: Retrieve bug details for BUG-1048 first.',d:1400},
+  {c:'t-planner',t:'   → Tool: get_bug_report(bug_id="BUG-1048")',d:1900},
+  {c:'t-planner',t:'   ✓ Obs: P2 · Login button stays disabled · component=web/login',d:2500},
+  {c:'t-planner',t:'   → Tool: list_repo_files(prefix="web/login")',d:3000},
+  {c:'t-planner',t:'   ✓ Obs: [useLoginState.ts, LoginForm.tsx, login.css]',d:3600},
+  {c:'t-planner',t:'   📋 HANDOFF: Focus on useLoginState.ts (isLocked state bug)',d:4100},
+  {c:'t-orch',t:'[ORCHESTRATOR] Planner done. Waiting for "okay"...',d:4600},
+  {c:'t-ok',t:'   [User: okay]',d:5200},
+  {c:'t-coder',t:'[2/3 CODER] 💭 Thought: Read useLoginState.ts to understand the bug.',d:5700},
+  {c:'t-coder',t:'   → Tool: read_file(path="web/login/useLoginState.ts")',d:6200},
+  {c:'t-coder',t:'   ✓ Obs: setIsLocked(true) on failure — never cleared. Root cause found.',d:6900},
+  {c:'t-coder',t:'   → Tool: propose_patch(bug_id="BUG-1048", ...)',d:7400},
+  {c:'t-coder',t:'   ✓ Patch: Add setIsLocked(false) before setting error state',d:8000},
+  {c:'t-coder',t:'   🩹 Patch written to SQLite patches table.',d:8300},
+  {c:'t-orch',t:'[ORCHESTRATOR] Coder done. Waiting for "okay"...',d:8700},
+  {c:'t-ok',t:'   [User: okay]',d:9300},
+  {c:'t-reviewer',t:'[3/3 REVIEWER] 💭 Thought: Run checks on BUG-1048 patch first.',d:9800},
+  {c:'t-reviewer',t:'   → Tool: run_checks(bug_id="BUG-1048")',d:10300},
+  {c:'t-reviewer',t:'   ✓ Obs: unit_tests=pass · lint=pass · patch clears isLocked ✓',d:10900},
+  {c:'t-reviewer',t:'   → Tool: submit_review(decision="approve", ...)',d:11400},
+  {c:'t-reviewer',t:'   ✓ Review written to SQLite reviews table.',d:11900},
+  {c:'t-sys',t:'──────────────────────────────────────',d:12300},
+  {c:'t-good',t:'✅ CREW DONE. BUG-1048 → status: RESOLVED.',d:12600},
+  {c:'t-sys',t:'   Inspect SQLite: SELECT * FROM reviews; SELECT * FROM patches;',d:13000},
+];
+function runCrewSim(){
+  const term=document.getElementById('lab-terminal');
+  const btn=document.getElementById('crew-play-btn');
+  btn.disabled=true; btn.textContent='⏳ Running...';
+  term.innerHTML='';
+  crewLines.forEach(({c,t,d})=>{
+    setTimeout(()=>{
+      const div=document.createElement('div');
+      div.className='tl '+c;
+      div.textContent=t;
+      term.appendChild(div);
+      term.scrollTop=term.scrollHeight;
+      if(d===crewLines[crewLines.length-1].d){btn.disabled=false;btn.textContent='↺ Run Again';}
+    },d);
+  });
+}
+</script>
+</body>
+</html>
