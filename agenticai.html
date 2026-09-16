@@ -1,0 +1,1008 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Deloitte Gen AI Day 2 — Agentic AI</title>
+<style>
+:root {
+  color-scheme: dark;
+  --bg: #07080f;
+  --surface: #10111d;
+  --surface2: #181928;
+  --surface3: #1e2035;
+  --border: rgba(99,102,241,.25);
+  --border2: rgba(99,102,241,.12);
+  --accent: #6366f1;
+  --accent2: #818cf8;
+  --cyan: #22d3ee;
+  --green: #34d399;
+  --amber: #fbbf24;
+  --red: #f87171;
+  --pink: #f472b6;
+  --text: #e2e4f0;
+  --text2: #9ba3c2;
+  --text3: #5c6490;
+  --nav-w: 240px;
+  --r: 12px;
+  --r2: 8px;
+  --glow: 0 0 24px rgba(99,102,241,.3);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,sans-serif;overflow:hidden}
+button{cursor:pointer;border:none;background:none;color:inherit;font:inherit}
+#app{display:flex;height:100vh;overflow:hidden}
+#nav{width:var(--nav-w);min-width:var(--nav-w);background:var(--surface);border-right:1px solid var(--border2);display:flex;flex-direction:column;overflow-y:auto;z-index:10}
+#nav-logo{padding:20px 16px 12px;border-bottom:1px solid var(--border2)}
+#nav-logo .logo-badge{display:flex;align-items:center;gap:10px}
+#nav-logo .dot{width:10px;height:10px;border-radius:50%;background:var(--accent);box-shadow:0 0 8px var(--accent);animation:pulse 2s infinite}
+#nav-logo h1{font-size:13px;font-weight:700;letter-spacing:.05em;color:var(--accent2);text-transform:uppercase}
+#nav-logo p{font-size:10px;color:var(--text3);margin-top:2px;padding-left:20px}
+#nav-items{flex:1;padding:8px 0}
+.nav-item{display:flex;align-items:center;gap:10px;padding:10px 16px;font-size:12.5px;color:var(--text2);border-left:2px solid transparent;transition:all .2s;cursor:pointer;user-select:none}
+.nav-item:hover{background:var(--surface2);color:var(--text)}
+.nav-item.active{color:var(--accent2);border-left-color:var(--accent);background:rgba(99,102,241,.08)}
+.nav-item .nav-icon{width:20px;text-align:center;font-size:15px;flex-shrink:0}
+.nav-item .nav-num{width:18px;height:18px;border-radius:50%;background:var(--surface3);font-size:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;color:var(--text3)}
+.nav-item.active .nav-num{background:var(--accent);color:#fff}
+#nav-footer{padding:12px 16px;border-top:1px solid var(--border2);font-size:11px;color:var(--text3)}
+#progress-bar{height:3px;background:var(--surface3);border-radius:2px;margin-top:6px;overflow:hidden}
+#progress-fill{height:100%;background:linear-gradient(90deg,var(--accent),var(--cyan));transition:width .4s;border-radius:2px}
+#main{flex:1;overflow-y:auto;overflow-x:hidden}
+.section{display:none;min-height:100vh;padding:40px 48px;animation:fadeIn .3s ease}
+.section.active{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+@keyframes pulse{0%,100%{box-shadow:0 0 8px var(--accent)}50%{box-shadow:0 0 20px var(--accent)}}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
+.sec-header{margin-bottom:32px}
+.sec-tag{display:inline-flex;align-items:center;gap:6px;background:rgba(99,102,241,.12);border:1px solid var(--border);color:var(--accent2);font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;padding:4px 12px;border-radius:20px;margin-bottom:12px}
+.sec-title{font-size:32px;font-weight:800;line-height:1.1;background:linear-gradient(135deg,var(--text),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.sec-sub{font-size:15px;color:var(--text2);margin-top:8px;max-width:620px;line-height:1.6}
+.cards-grid{display:grid;gap:16px}
+.cards-2{grid-template-columns:repeat(2,1fr)}
+.cards-3{grid-template-columns:repeat(3,1fr)}
+.cards-4{grid-template-columns:repeat(4,1fr)}
+.card{background:var(--surface);border:1px solid var(--border2);border-radius:var(--r);padding:24px;transition:border-color .2s,box-shadow .2s}
+.card:hover{border-color:var(--border);box-shadow:var(--glow)}
+.card-icon{font-size:28px;margin-bottom:12px}
+.card-title{font-size:15px;font-weight:700;margin-bottom:6px;color:var(--text)}
+.card-body{font-size:13px;color:var(--text2);line-height:1.6}
+.card-tag{display:inline-block;font-size:11px;font-weight:600;padding:2px 8px;border-radius:20px;margin-bottom:8px}
+.tag-accent{background:rgba(99,102,241,.15);color:var(--accent2)}
+.tag-cyan{background:rgba(34,211,238,.12);color:var(--cyan)}
+.tag-green{background:rgba(52,211,153,.12);color:var(--green)}
+.tag-amber{background:rgba(251,191,36,.12);color:var(--amber)}
+.tag-red{background:rgba(248,113,113,.12);color:var(--red)}
+.tag-pink{background:rgba(244,114,182,.12);color:var(--pink)}
+.flip-wrap{perspective:1000px;cursor:pointer}
+.flip-inner{position:relative;width:100%;height:200px;transform-style:preserve-3d;transition:transform .6s ease;border-radius:var(--r)}
+.flip-wrap.flipped .flip-inner{transform:rotateY(180deg)}
+.flip-front,.flip-back{position:absolute;inset:0;backface-visibility:hidden;-webkit-backface-visibility:hidden;border-radius:var(--r);padding:24px;display:flex;flex-direction:column;justify-content:center}
+.flip-front{background:var(--surface);border:1px solid var(--border2)}
+.flip-back{background:linear-gradient(135deg,var(--surface2),rgba(99,102,241,.08));border:1px solid var(--border);transform:rotateY(180deg)}
+.flip-hint{position:absolute;bottom:10px;right:14px;font-size:10px;color:var(--text3)}
+.flip-hint::before{content:"↻ ";font-size:12px}
+#s-hero{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;text-align:center;padding:40px;background:radial-gradient(ellipse 80% 60% at 50% 0%,rgba(99,102,241,.15),transparent)}
+.hero-badge{display:inline-flex;align-items:center;gap:8px;background:rgba(99,102,241,.1);border:1px solid var(--border);border-radius:24px;padding:6px 16px;font-size:12px;font-weight:600;color:var(--accent2);letter-spacing:.06em;text-transform:uppercase;margin-bottom:24px;animation:float 3s ease-in-out infinite}
+.hero-title{font-size:52px;font-weight:900;line-height:1;letter-spacing:-.02em;margin-bottom:16px;background:linear-gradient(135deg,#fff 0%,var(--accent2) 50%,var(--cyan) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.hero-sub{font-size:17px;color:var(--text2);max-width:520px;line-height:1.6;margin-bottom:32px}
+.hero-modules{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-bottom:36px;max-width:640px}
+.hero-mod-chip{padding:6px 14px;border-radius:20px;font-size:12px;font-weight:600;background:var(--surface);border:1px solid var(--border2);color:var(--text2);transition:all .2s;cursor:pointer}
+.hero-mod-chip:hover{border-color:var(--accent);color:var(--accent2);background:rgba(99,102,241,.08)}
+.hero-cta{display:inline-flex;align-items:center;gap:8px;background:var(--accent);color:#fff;font-size:15px;font-weight:700;padding:14px 32px;border-radius:10px;cursor:pointer;transition:all .2s;box-shadow:0 0 24px rgba(99,102,241,.4)}
+.hero-cta:hover{transform:translateY(-2px);box-shadow:0 0 36px rgba(99,102,241,.5)}
+.hero-stats{display:flex;gap:40px;margin-top:36px}
+.hero-stat-num{font-size:28px;font-weight:800;color:var(--accent2)}
+.hero-stat-label{font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-top:2px}
+#react-demo{background:var(--surface);border:1px solid var(--border2);border-radius:var(--r);overflow:hidden;margin-top:24px}
+#react-steps{display:flex;border-bottom:1px solid var(--border2)}
+.react-step-tab{flex:1;padding:10px 4px;font-size:11px;font-weight:600;text-align:center;color:var(--text3);border-bottom:2px solid transparent;transition:all .2s;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.react-step-tab.done{color:var(--green)}
+.react-step-tab.active{color:var(--accent2);border-bottom-color:var(--accent)}
+#react-body{padding:24px 28px}
+.react-thought{font-size:13.5px;line-height:1.7;color:var(--text2)}
+.react-thought strong{color:var(--text)}
+.react-code{background:var(--bg);border:1px solid var(--border2);border-radius:var(--r2);padding:12px 16px;font-family:monospace;font-size:12.5px;color:var(--cyan);margin-top:12px;white-space:pre-wrap}
+.react-controls{display:flex;gap:10px;padding:0 28px 20px;align-items:center}
+.react-btn{padding:8px 20px;border-radius:8px;font-size:13px;font-weight:600;border:1px solid var(--border);color:var(--text2);background:var(--surface2);transition:all .2s}
+.react-btn:hover{border-color:var(--accent);color:var(--accent2)}
+.react-btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+#react-progress{flex:1;height:4px;background:var(--surface3);border-radius:2px;overflow:hidden}
+#react-fill{height:100%;background:linear-gradient(90deg,var(--accent),var(--cyan));transition:width .4s;border-radius:2px}
+#fw-selector{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px}
+.fw-tab{padding:8px 18px;border-radius:20px;font-size:13px;font-weight:600;border:1px solid var(--border2);color:var(--text2);background:var(--surface);transition:all .2s;cursor:pointer}
+.fw-tab.active{background:var(--accent);border-color:var(--accent);color:#fff;box-shadow:0 0 16px rgba(99,102,241,.3)}
+.fw-panel{display:none;animation:fadeIn .3s ease}
+.fw-panel.active{display:block}
+.fw-detail{background:var(--surface);border:1px solid var(--border2);border-radius:var(--r);padding:28px}
+.fw-header{display:flex;align-items:flex-start;gap:16px;margin-bottom:20px}
+.fw-emoji{font-size:40px}
+.fw-name{font-size:20px;font-weight:800}
+.fw-tagline{font-size:13px;color:var(--text2);margin-top:4px}
+.fw-chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.fw-chip{font-size:11px;padding:3px 10px;border-radius:20px;font-weight:600}
+.fw-pros-cons{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:16px}
+.fw-list-title{font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;margin-bottom:8px}
+.fw-list-title.pros{color:var(--green)}
+.fw-list-title.cons{color:var(--red)}
+.fw-list li{font-size:13px;color:var(--text2);margin-bottom:6px;list-style:none;display:flex;gap:6px}
+.fw-list.pros li::before{content:"✓";color:var(--green);flex-shrink:0}
+.fw-list.cons li::before{content:"✗";color:var(--red);flex-shrink:0}
+.fw-code-sample{background:var(--bg);border:1px solid var(--border2);border-radius:var(--r2);padding:16px;font-family:monospace;font-size:12px;color:var(--text2);margin-top:16px;overflow-x:auto;white-space:pre}
+.fw-code-sample .kw{color:var(--accent2)}
+.fw-code-sample .fn{color:var(--cyan)}
+.fw-code-sample .str{color:var(--green)}
+.fw-code-sample .cm{color:var(--text3)}
+.arch-node{cursor:pointer}
+#arch-info{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:20px;margin-top:16px;min-height:80px;animation:fadeIn .2s ease}
+.arch-info-title{font-size:15px;font-weight:700;color:var(--accent2);margin-bottom:8px}
+.arch-info-body{font-size:13px;color:var(--text2);line-height:1.6}
+.cmp-table{width:100%;border-collapse:collapse;margin-top:16px}
+.cmp-table th,.cmp-table td{padding:12px 16px;text-align:left;border-bottom:1px solid var(--border2);font-size:13px}
+.cmp-table th{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text3);background:var(--surface2)}
+.cmp-table td:first-child{color:var(--text2);font-weight:600}
+.col-lc{color:var(--cyan)}
+.col-lg{color:var(--accent2)}
+.cmp-table tr:last-child td{border-bottom:none}
+.cmp-table tr:hover td{background:rgba(99,102,241,.04)}
+.step-list{display:flex;flex-direction:column;gap:12px;margin-top:16px}
+.step-item{display:flex;gap:16px;align-items:flex-start}
+.step-num{width:32px;height:32px;border-radius:50%;background:var(--accent);color:#fff;font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px;box-shadow:0 0 12px rgba(99,102,241,.4)}
+.step-title{font-size:14px;font-weight:700;margin-bottom:4px}
+.step-desc{font-size:13px;color:var(--text2);line-height:1.5}
+.code-block{background:var(--bg);border:1px solid var(--border2);border-radius:var(--r2);padding:20px;font-family:monospace;font-size:12.5px;line-height:1.8;overflow-x:auto;white-space:pre;margin-top:12px}
+.code-block .kw{color:var(--accent2)}
+.code-block .fn{color:var(--cyan)}
+.code-block .str{color:var(--green)}
+.code-block .cm{color:var(--text3);font-style:italic}
+.code-block .num{color:var(--amber)}
+.agent-flow{display:flex;align-items:center;gap:0;flex-wrap:wrap;margin:20px 0}
+.agent-box{background:var(--surface);border:1px solid var(--border2);border-radius:var(--r);padding:14px 18px;font-size:13px;font-weight:600;text-align:center;min-width:110px;transition:all .2s}
+.agent-box:hover{border-color:var(--accent);box-shadow:var(--glow)}
+.ab-icon{font-size:22px;margin-bottom:6px}
+.ab-role{font-size:10px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;margin-top:4px;color:var(--text3)}
+.flow-arrow{flex:1;display:flex;align-items:center;justify-content:center;color:var(--text3);font-size:20px;min-width:32px}
+.bidirectional{flex-direction:column;gap:2px;font-size:14px}
+#lab-terminal{background:#000;border:1px solid #222;border-radius:var(--r);padding:20px;font-family:monospace;font-size:12.5px;margin-top:16px;max-height:380px;overflow-y:auto}
+.term-line{line-height:1.8;white-space:pre-wrap}
+.term-sys{color:var(--text3)}
+.term-think{color:var(--amber)}
+.term-action{color:var(--cyan)}
+.term-obs{color:var(--green)}
+.term-prompt{color:var(--pink)}
+.term-approve{color:var(--accent2);font-weight:700;background:rgba(99,102,241,.1);padding:2px 6px;border-radius:4px;display:inline-block}
+.tab-bar{display:flex;gap:4px;border-bottom:1px solid var(--border2);margin-bottom:20px}
+.tab-btn{padding:10px 18px;font-size:13px;font-weight:600;color:var(--text3);border-bottom:2px solid transparent;transition:all .2s;cursor:pointer}
+.tab-btn.active{color:var(--accent2);border-bottom-color:var(--accent)}
+.tab-pane{display:none}
+.tab-pane.active{display:block;animation:fadeIn .2s ease}
+.row{display:flex;gap:16px;margin-bottom:16px;align-items:stretch}
+.row>*{flex:1}
+.mt-8{margin-top:8px}
+.mt-16{margin-top:16px}
+.mt-24{margin-top:24px}
+.label{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text3);margin-bottom:8px}
+.divider{height:1px;background:var(--border2);margin:24px 0}
+.highlight-box{background:rgba(99,102,241,.06);border:1px solid var(--border);border-radius:var(--r2);padding:16px 20px;margin-top:12px;font-size:13px;color:var(--text2);line-height:1.6}
+.highlight-box strong{color:var(--accent2)}
+.emoji-bullet{font-size:13px;color:var(--text2);margin-bottom:8px;display:flex;gap:8px;align-items:flex-start;line-height:1.5}
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:var(--surface)}
+::-webkit-scrollbar-thumb{background:var(--surface3);border-radius:3px}
+</style>
+</head>
+<body>
+<div id="app">
+<nav id="nav">
+  <div id="nav-logo">
+    <div class="logo-badge"><div class="dot"></div><h1>GenAI Day 2</h1></div>
+    <p>Agentic AI Training</p>
+  </div>
+  <div id="nav-items">
+    <div class="nav-item active" data-s="s-hero"><span class="nav-icon">🏠</span><span>Home</span></div>
+    <div class="nav-item" data-s="s-agent"><span class="nav-num">1</span><span>What is an Agent?</span></div>
+    <div class="nav-item" data-s="s-arch"><span class="nav-num">2</span><span>Agent Architecture</span></div>
+    <div class="nav-item" data-s="s-react"><span class="nav-num">3</span><span>ReAct Pattern</span></div>
+    <div class="nav-item" data-s="s-planning"><span class="nav-num">4</span><span>Planning &amp; Memory</span></div>
+    <div class="nav-item" data-s="s-frameworks"><span class="nav-num">5</span><span>AI Frameworks</span></div>
+    <div class="nav-item" data-s="s-lcvslg"><span class="nav-num">6</span><span>LangChain vs LangGraph</span></div>
+    <div class="nav-item" data-s="s-multi"><span class="nav-num">7</span><span>Multi-Agent Systems</span></div>
+    <div class="nav-item" data-s="s-secure"><span class="nav-num">8</span><span>Secure Coding</span></div>
+    <div class="nav-item" data-s="s-lab"><span class="nav-num">9</span><span>Lab: VPN Agent</span></div>
+    <div class="nav-item" data-s="s-handson"><span class="nav-num">10</span><span>Hands-On Paths</span></div>
+  </div>
+  <div id="nav-footer">
+    <div>Progress</div>
+    <div id="progress-bar"><div id="progress-fill" style="width:9%"></div></div>
+  </div>
+</nav>
+<div id="main">
+
+<section id="s-hero" class="section active">
+  <div class="hero-badge">🤖 Deloitte · Agentic AI Bootcamp · Day 2</div>
+  <h1 class="hero-title">From Models<br>to Agents</h1>
+  <p class="hero-sub">Learn how AI agents think, plan, remember, and act — then build one yourself in the live lab.</p>
+  <div class="hero-modules">
+    <div class="hero-mod-chip" onclick="nav('s-agent')">What is an Agent</div>
+    <div class="hero-mod-chip" onclick="nav('s-arch')">Architecture</div>
+    <div class="hero-mod-chip" onclick="nav('s-react')">ReAct Loop</div>
+    <div class="hero-mod-chip" onclick="nav('s-planning')">Planning &amp; Memory</div>
+    <div class="hero-mod-chip" onclick="nav('s-frameworks')">Frameworks</div>
+    <div class="hero-mod-chip" onclick="nav('s-lcvslg')">LangChain vs LangGraph</div>
+    <div class="hero-mod-chip" onclick="nav('s-multi')">Multi-Agent</div>
+    <div class="hero-mod-chip" onclick="nav('s-secure')">Secure Coding</div>
+    <div class="hero-mod-chip" onclick="nav('s-lab')">VPN Agent Lab</div>
+    <div class="hero-mod-chip" onclick="nav('s-handson')">Hands-On</div>
+  </div>
+  <button class="hero-cta" onclick="nav('s-agent')">Start Learning →</button>
+  <div class="hero-stats">
+    <div class="hero-stat"><div class="hero-stat-num">10</div><div class="hero-stat-label">Modules</div></div>
+    <div class="hero-stat"><div class="hero-stat-num">50+</div><div class="hero-stat-label">Interactive Cards</div></div>
+    <div class="hero-stat"><div class="hero-stat-num">1</div><div class="hero-stat-label">Live Agent Lab</div></div>
+  </div>
+</section>
+
+<section id="s-agent" class="section">
+  <div class="sec-header">
+    <div class="sec-tag">Module 1</div>
+    <h2 class="sec-title">What is an AI Agent?</h2>
+    <p class="sec-sub">Flip each card to reveal the insight. Click again to flip back.</p>
+  </div>
+  <div class="cards-grid cards-2" style="margin-bottom:20px">
+    <div class="flip-wrap" onclick="this.classList.toggle('flipped')">
+      <div class="flip-inner">
+        <div class="flip-front">
+          <div class="card-tag tag-cyan">Chatbot</div>
+          <div class="card-icon">💬</div>
+          <div class="card-title">ChatGPT / Gemini</div>
+          <div class="card-body">You ask → It answers. One shot. No follow-up actions. No tools. Stateless.</div>
+          <div class="flip-hint">flip to compare</div>
+        </div>
+        <div class="flip-back">
+          <div class="card-tag tag-accent">Agent</div>
+          <div class="card-icon">🤖</div>
+          <div class="card-title">Agentic AI</div>
+          <div class="card-body">You give a goal → It <strong>plans</strong>, calls <strong>tools</strong>, checks results, retries, and delivers. Multiple steps, autonomous execution.</div>
+          <div class="flip-hint">flip back</div>
+        </div>
+      </div>
+    </div>
+    <div class="flip-wrap" onclick="this.classList.toggle('flipped')">
+      <div class="flip-inner">
+        <div class="flip-front">
+          <div class="card-tag tag-amber">Human Worker</div>
+          <div class="card-icon">👷</div>
+          <div class="card-title">How a human handles IT tickets</div>
+          <div class="card-body">Reads ticket → Checks systems → Calls APIs → Makes decisions → Escalates if unsure.</div>
+          <div class="flip-hint">flip to see agent version</div>
+        </div>
+        <div class="flip-back">
+          <div class="card-tag tag-accent">Agent Version</div>
+          <div class="card-icon">⚡</div>
+          <div class="card-title">Agent handles IT tickets 24/7</div>
+          <div class="card-body">Same loop — at machine speed, no breaks, full audit trail, HITL gate before any risky action.</div>
+          <div class="flip-hint">flip back</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="divider"></div>
+  <div class="label">The Autonomy Spectrum — click to explore</div>
+  <div class="cards-grid cards-3 mt-8">
+    <div class="card" onclick="showAutonomy(0)" id="auto-0" style="cursor:pointer;border-color:var(--green)">
+      <div class="card-tag tag-green">Level 1</div>
+      <div class="card-icon">🧑‍✈️</div>
+      <div class="card-title">Assisted</div>
+      <div class="card-body">Human decides every step. AI drafts text, suggests actions. Like Copilot or Gmail Smart Compose.</div>
+    </div>
+    <div class="card" onclick="showAutonomy(1)" id="auto-1" style="cursor:pointer">
+      <div class="card-tag tag-amber">Level 2</div>
+      <div class="card-icon">🤝</div>
+      <div class="card-title">Semi-Autonomous</div>
+      <div class="card-body">Agent executes routine tasks. Pauses at critical decisions for human approval. <em>Today's enterprise sweet spot.</em></div>
+    </div>
+    <div class="card" onclick="showAutonomy(2)" id="auto-2" style="cursor:pointer">
+      <div class="card-tag tag-accent">Level 3</div>
+      <div class="card-icon">🚀</div>
+      <div class="card-title">Autonomous</div>
+      <div class="card-body">End-to-end execution with no human in the loop. Reserved for low-risk, well-bounded domains.</div>
+    </div>
+  </div>
+  <div id="autonomy-detail" class="highlight-box mt-16" style="display:none"></div>
+  <div class="divider"></div>
+  <div class="label">Real Deloitte Use Cases</div>
+  <div class="cards-grid cards-4 mt-8">
+    <div class="card"><div class="card-icon">📋</div><div class="card-title">IT Support</div><div class="card-body">Auto-resolves VPN, password, access tickets. Escalates only when needed.</div></div>
+    <div class="card"><div class="card-icon">💰</div><div class="card-title">Finance Ops</div><div class="card-body">Invoice matching, anomaly detection, month-end reconciliation.</div></div>
+    <div class="card"><div class="card-icon">🔒</div><div class="card-title">Cyber Triage</div><div class="card-body">Monitors alerts, correlates signals, drafts incident response playbooks.</div></div>
+    <div class="card"><div class="card-icon">📊</div><div class="card-title">Audit</div><div class="card-body">Pulls data from ERP, runs tests, flags anomalies, drafts findings.</div></div>
+  </div>
+</section>
+
+<section id="s-arch" class="section">
+  <div class="sec-header">
+    <div class="sec-tag">Module 2</div>
+    <h2 class="sec-title">Agent Architecture</h2>
+    <p class="sec-sub">Click any layer in the diagram to learn what it does.</p>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px">
+    <div>
+      <svg viewBox="0 0 340 430" fill="none" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-width:700px">
+        <g class="arch-node" onclick="showArch('user')" style="cursor:pointer">
+          <rect x="95" y="10" width="150" height="52" rx="10" fill="#1e2035" stroke="#6366f1" stroke-width="1.5"/>
+          <text x="170" y="30" text-anchor="middle" fill="#e2e4f0" font-size="13" font-weight="700">User / Goal</text>
+          <text x="170" y="48" text-anchor="middle" fill="#9ba3c2" font-size="10">"Fix VPN for priya.n"</text>
+        </g>
+        <path d="M170 62 L170 90" stroke="#6366f1" stroke-width="1.5" stroke-dasharray="4 3" marker-end="url(#a1)"/>
+        <g class="arch-node" onclick="showArch('llm')" style="cursor:pointer">
+          <rect x="60" y="90" width="220" height="60" rx="10" fill="#13131a" stroke="#818cf8" stroke-width="2"/>
+          <text x="170" y="115" text-anchor="middle" fill="#818cf8" font-size="14" font-weight="800">🧠 LLM (Brain)</text>
+          <text x="170" y="134" text-anchor="middle" fill="#9ba3c2" font-size="11">Reason · Plan · Decide</text>
+        </g>
+        <path d="M120 150 L70 182" stroke="#5c6490" stroke-width="1.2" stroke-dasharray="3 3" marker-end="url(#a2)"/>
+        <path d="M170 150 L170 182" stroke="#5c6490" stroke-width="1.2" stroke-dasharray="3 3" marker-end="url(#a2)"/>
+        <path d="M220 150 L270 182" stroke="#5c6490" stroke-width="1.2" stroke-dasharray="3 3" marker-end="url(#a2)"/>
+        <g class="arch-node" onclick="showArch('planner')" style="cursor:pointer">
+          <rect x="10" y="182" width="104" height="58" rx="8" fill="#1e2035" stroke="#22d3ee" stroke-width="1.5"/>
+          <text x="62" y="204" text-anchor="middle" fill="#22d3ee" font-size="12" font-weight="700">📋 Planner</text>
+          <text x="62" y="220" text-anchor="middle" fill="#9ba3c2" font-size="10">Step sequencing</text>
+          <text x="62" y="233" text-anchor="middle" fill="#9ba3c2" font-size="10">Stop conditions</text>
+        </g>
+        <g class="arch-node" onclick="showArch('tools')" style="cursor:pointer">
+          <rect x="120" y="182" width="100" height="58" rx="8" fill="#1e2035" stroke="#34d399" stroke-width="1.5"/>
+          <text x="170" y="204" text-anchor="middle" fill="#34d399" font-size="12" font-weight="700">🔧 Tools</text>
+          <text x="170" y="220" text-anchor="middle" fill="#9ba3c2" font-size="10">APIs · DBs · Code</text>
+          <text x="170" y="233" text-anchor="middle" fill="#9ba3c2" font-size="10">Search · Email</text>
+        </g>
+        <g class="arch-node" onclick="showArch('memory')" style="cursor:pointer">
+          <rect x="226" y="182" width="104" height="58" rx="8" fill="#1e2035" stroke="#fbbf24" stroke-width="1.5"/>
+          <text x="278" y="204" text-anchor="middle" fill="#fbbf24" font-size="12" font-weight="700">💾 Memory</text>
+          <text x="278" y="220" text-anchor="middle" fill="#9ba3c2" font-size="10">Short · Long</text>
+          <text x="278" y="233" text-anchor="middle" fill="#9ba3c2" font-size="10">Episodic</text>
+        </g>
+        <path d="M62 240 L120 292" stroke="#5c6490" stroke-width="1.2" stroke-dasharray="3 3" marker-end="url(#a2)"/>
+        <path d="M170 240 L170 292" stroke="#5c6490" stroke-width="1.2" stroke-dasharray="3 3" marker-end="url(#a2)"/>
+        <path d="M278 240 L220 292" stroke="#5c6490" stroke-width="1.2" stroke-dasharray="3 3" marker-end="url(#a2)"/>
+        <g class="arch-node" onclick="showArch('env')" style="cursor:pointer">
+          <rect x="60" y="292" width="220" height="52" rx="10" fill="#1e2035" stroke="#f472b6" stroke-width="1.5"/>
+          <text x="170" y="314" text-anchor="middle" fill="#f472b6" font-size="13" font-weight="700">🌍 Environment</text>
+          <text x="170" y="332" text-anchor="middle" fill="#9ba3c2" font-size="10">Real systems · Feedback · Observations</text>
+        </g>
+        <path d="M290 344 Q338 385 338 220 Q338 80 230 62" stroke="#6366f1" stroke-width="1.2" stroke-dasharray="5 4" fill="none" marker-end="url(#a1)"/>
+        <g class="arch-node" onclick="showArch('hitl')" style="cursor:pointer">
+          <rect x="95" y="368" width="150" height="44" rx="8" fill="#1e2035" stroke="#f87171" stroke-width="1.5"/>
+          <text x="170" y="388" text-anchor="middle" fill="#f87171" font-size="12" font-weight="700">🛑 HITL Gate</text>
+          <text x="170" y="405" text-anchor="middle" fill="#9ba3c2" font-size="10">Human-in-the-Loop approval</text>
+        </g>
+        <path d="M170 344 L170 368" stroke="#f87171" stroke-width="1.2" stroke-dasharray="3 3" marker-end="url(#a3)"/>
+        <defs>
+          <marker id="a1" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="#6366f1"/></marker>
+          <marker id="a2" markerWidth="6" markerHeight="6" refX="5" refY="2.5" orient="auto"><path d="M0,0 L6,2.5 L0,5 Z" fill="#5c6490"/></marker>
+          <marker id="a3" markerWidth="6" markerHeight="6" refX="5" refY="2.5" orient="auto"><path d="M0,0 L6,2.5 L0,5 Z" fill="#f87171"/></marker>
+        </defs>
+      </svg>
+    </div>
+    <div>
+      <div id="arch-info" class="card">
+        <div class="arch-info-title">👆 Click any layer in the diagram</div>
+        <div class="arch-info-body">Each block plays a specific role. Click to learn what it does and see it in the context of the VPN lab.</div>
+      </div>
+      <div class="highlight-box mt-16"><strong>Key insight:</strong> An agent is not one big model — it's an <em>orchestrated system</em>. The LLM is the brain; tools are the hands; memory is the notepad; the environment is the real world.</div>
+      <div class="cards-grid cards-2 mt-16">
+        <div class="card"><div class="card-tag tag-cyan">Observe</div><div class="card-body">Read the current state. What does the system know right now?</div></div>
+        <div class="card"><div class="card-tag tag-green">Reason</div><div class="card-body">LLM processes observation, picks next tool to call.</div></div>
+        <div class="card"><div class="card-tag tag-amber">Act</div><div class="card-body">Execute the tool. Write result back to memory. Update state.</div></div>
+        <div class="card"><div class="card-tag tag-pink">Loop</div><div class="card-body">Repeat until goal met, max steps reached, or HITL triggered.</div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="s-react" class="section">
+  <div class="sec-header">
+    <div class="sec-tag">Module 3</div>
+    <h2 class="sec-title">The ReAct Pattern</h2>
+    <p class="sec-sub">Step through the agent's thought process live. Click tabs or use Prev/Next.</p>
+  </div>
+  <div class="row">
+    <div class="card" style="flex:0 0 250px">
+      <div class="card-tag tag-accent">What is ReAct?</div>
+      <div class="card-body" style="margin-top:8px"><strong style="color:var(--text)">Re</strong>asoning + <strong style="color:var(--text)">Act</strong>ing interleaved in one loop.</div>
+      <div class="divider" style="margin:16px 0"></div>
+      <div class="emoji-bullet"><span>💭</span><span><strong>Thought</strong> — What do I know? What next?</span></div>
+      <div class="emoji-bullet"><span>🔧</span><span><strong>Action</strong> — Call a specific tool</span></div>
+      <div class="emoji-bullet"><span>📋</span><span><strong>Args</strong> — Parameters for that tool</span></div>
+      <div class="emoji-bullet"><span>👁️</span><span><strong>Observation</strong> — Tool result injected back</span></div>
+      <div class="emoji-bullet"><span>🔁</span><span><strong>Repeat</strong> until goal achieved</span></div>
+    </div>
+    <div style="flex:1">
+      <div id="react-demo">
+        <div id="react-steps">
+          <div class="react-step-tab active" id="rtab-0" onclick="reactGo(0)">💭 Thought 1</div>
+          <div class="react-step-tab" id="rtab-1" onclick="reactGo(1)">🔧 Action 1</div>
+          <div class="react-step-tab" id="rtab-2" onclick="reactGo(2)">👁️ Observe 1</div>
+          <div class="react-step-tab" id="rtab-3" onclick="reactGo(3)">💭 Thought 2</div>
+          <div class="react-step-tab" id="rtab-4" onclick="reactGo(4)">🔧 Action 2</div>
+          <div class="react-step-tab" id="rtab-5" onclick="reactGo(5)">👁️ Observe 2</div>
+          <div class="react-step-tab" id="rtab-6" onclick="reactGo(6)">🛑 HITL</div>
+        </div>
+        <div id="react-body"><div class="react-thought" id="react-content"></div></div>
+        <div class="react-controls">
+          <button class="react-btn" onclick="reactPrev()">← Prev</button>
+          <div id="react-progress"><div id="react-fill"></div></div>
+          <button class="react-btn primary" onclick="reactNext()" id="react-next-btn">Next →</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="divider"></div>
+  <div class="label">ReAct Loop in Code</div>
+  <div class="code-block"><span class="kw">while</span> <span class="cm">not</span> done <span class="kw">and</span> steps &lt; MAX_STEPS:
+    thought = llm.think(history, tools_available)   <span class="cm"># LLM reasons</span>
+    action, args = llm.decide_action(thought)       <span class="cm"># pick tool + params</span>
+    <span class="kw">if</span> action == <span class="str">"FINISH"</span>:
+        done = <span class="num">True</span>; <span class="kw">break</span>
+    <span class="kw">elif</span> action == <span class="str">"APPROVE_RESET"</span>:
+        wait_for_human_approval()                   <span class="cm"># HITL gate</span>
+    <span class="kw">else</span>:
+        obs = tools[action](**args)                 <span class="cm"># call tool</span>
+        history.append(thought, action, obs)        <span class="cm"># add to context</span></div>
+</section>
+
+<section id="s-planning" class="section">
+  <div class="sec-header">
+    <div class="sec-tag">Module 4</div>
+    <h2 class="sec-title">Planning &amp; Memory</h2>
+    <p class="sec-sub">How agents structure multi-step work and remember what they've done.</p>
+  </div>
+  <div class="tab-bar">
+    <div class="tab-btn active" onclick="switchTab(this,'planning')">📋 Planning</div>
+    <div class="tab-btn" onclick="switchTab(this,'memory')">💾 Memory Types</div>
+    <div class="tab-btn" onclick="switchTab(this,'loops')">🔁 Stop &amp; Retry</div>
+  </div>
+  <div id="tab-planning" class="tab-pane active">
+    <div class="cards-grid cards-2">
+      <div class="flip-wrap" onclick="this.classList.toggle('flipped')">
+        <div class="flip-inner">
+          <div class="flip-front">
+            <div class="card-tag tag-cyan">Static Planning</div>
+            <div class="card-icon">📜</div>
+            <div class="card-title">Fixed Plan</div>
+            <div class="card-body">Plan is made upfront. Steps are fixed. No adaptation to surprises.</div>
+            <div class="flip-hint">flip for when to use</div>
+          </div>
+          <div class="flip-back">
+            <div class="card-tag tag-cyan">When to Use</div>
+            <div class="card-body" style="margin-top:8px">✓ Well-defined SOPs<br>✓ Compliance workflows<br>✓ Low variability tasks<br><br><em>e.g. "Run month-end close checklist in order"</em></div>
+          </div>
+        </div>
+      </div>
+      <div class="flip-wrap" onclick="this.classList.toggle('flipped')">
+        <div class="flip-inner">
+          <div class="flip-front">
+            <div class="card-tag tag-accent">Dynamic Planning</div>
+            <div class="card-icon">🧩</div>
+            <div class="card-title">Adaptive Plan</div>
+            <div class="card-body">Plan evolves based on observations. Agent re-plans when unexpected results arrive.</div>
+            <div class="flip-hint">flip for when to use</div>
+          </div>
+          <div class="flip-back">
+            <div class="card-tag tag-accent">When to Use</div>
+            <div class="card-body" style="margin-top:8px">✓ Incident response<br>✓ Customer support<br>✓ Research &amp; analysis<br><br><em>e.g. "Diagnose VPN issue — adapt to what you find"</em></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div id="tab-memory" class="tab-pane">
+    <div class="cards-grid cards-3">
+      <div class="card" style="border-color:var(--cyan)">
+        <div class="card-tag tag-cyan">Short-Term</div>
+        <div class="card-icon">🗒️</div>
+        <div class="card-title">Context Window</div>
+        <div class="card-body">Everything in the current conversation. The LLM sees this directly. Limited to token window (~128K tokens).</div>
+        <div class="highlight-box" style="margin-top:12px;padding:10px 14px">Like working memory — gone when the session ends.</div>
+      </div>
+      <div class="card" style="border-color:var(--accent)">
+        <div class="card-tag tag-accent">Long-Term</div>
+        <div class="card-icon">🗄️</div>
+        <div class="card-title">Vector DB / RAG</div>
+        <div class="card-body">External storage with semantic search. Agent retrieves relevant chunks when needed. Survives across sessions.</div>
+        <div class="highlight-box" style="margin-top:12px;padding:10px 14px">Like Google Drive — search and retrieve on demand.</div>
+      </div>
+      <div class="card" style="border-color:var(--amber)">
+        <div class="card-tag tag-amber">Episodic</div>
+        <div class="card-icon">📷</div>
+        <div class="card-title">Checkpoints &amp; Audit</div>
+        <div class="card-body">Snapshots of agent state at each step. Enables recovery from failures, audit trails, and replay.</div>
+        <div class="highlight-box" style="margin-top:12px;padding:10px 14px">Like git history — you can roll back to any point.</div>
+      </div>
+    </div>
+  </div>
+  <div id="tab-loops" class="tab-pane">
+    <div class="row">
+      <div class="card">
+        <div class="card-tag tag-red">Stop Conditions</div>
+        <div class="card-body" style="margin-top:8px">Agents must know when to stop. Without stop conditions, they run forever (and cost money).</div>
+        <div class="step-list">
+          <div class="step-item"><div class="step-num">1</div><div><div class="step-title">Goal achieved</div><div class="step-desc">Agent outputs FINISH signal</div></div></div>
+          <div class="step-item"><div class="step-num">2</div><div><div class="step-title">Max steps reached</div><div class="step-desc">Hard cap e.g. MAX_STEPS=8</div></div></div>
+          <div class="step-item"><div class="step-num">3</div><div><div class="step-title">Max retries</div><div class="step-desc">Tool failed MAX_RETRIES=2 times</div></div></div>
+          <div class="step-item"><div class="step-num">4</div><div><div class="step-title">HITL trigger</div><div class="step-desc">Risky action detected, pause for human</div></div></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-tag tag-green">Retry &amp; Fallback</div>
+        <div class="card-body" style="margin-top:8px">When a tool fails, the agent doesn't crash — it retries intelligently.</div>
+        <div class="code-block" style="font-size:11.5px;margin-top:12px"><span class="kw">try</span>:
+  result = vpn_reset(user=<span class="str">"priya.n"</span>)
+<span class="kw">except</span> ToolError:
+  retries += <span class="num">1</span>
+  <span class="kw">if</span> retries >= MAX_RETRIES:
+    escalate_to_human()  <span class="cm"># fallback</span>
+  <span class="kw">else</span>:
+    wait(<span class="num">2</span>**retries)
+    retry_tool()</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="s-frameworks" class="section">
+  <div class="sec-header">
+    <div class="sec-tag">Module 5</div>
+    <h2 class="sec-title">AI Agent Frameworks</h2>
+    <p class="sec-sub">Click a framework to explore its strengths, weaknesses, and code pattern.</p>
+  </div>
+  <div id="fw-selector">
+    <div class="fw-tab active" onclick="switchFw(this,'fw-langchain')">🦜 LangChain</div>
+    <div class="fw-tab" onclick="switchFw(this,'fw-langgraph')">🕸️ LangGraph</div>
+    <div class="fw-tab" onclick="switchFw(this,'fw-autogen')">🤖 AutoGen</div>
+    <div class="fw-tab" onclick="switchFw(this,'fw-openai')">⚡ OpenAI SDK</div>
+    <div class="fw-tab" onclick="switchFw(this,'fw-crewai')">👥 CrewAI</div>
+  </div>
+  <div id="fw-langchain" class="fw-panel active"><div class="fw-detail">
+    <div class="fw-header"><div class="fw-emoji">🦜</div><div><div class="fw-name">LangChain</div><div class="fw-tagline">The Swiss army knife — chains, tools, retrievers, agents. Most popular framework.</div><div class="fw-chips"><span class="fw-chip tag-cyan">RAG</span><span class="fw-chip tag-green">Tool Use</span><span class="fw-chip tag-accent">LCEL</span></div></div></div>
+    <div class="fw-pros-cons">
+      <div><div class="fw-list-title pros">Strengths</div><ul class="fw-list pros"><li>100+ integrations</li><li>Fast to prototype</li><li>Great RAG / retriever support</li><li>LCEL composable chains</li></ul></div>
+      <div><div class="fw-list-title cons">Weaknesses</div><ul class="fw-list cons"><li>Stateless — hard to resume mid-task</li><li>No built-in loop/cycle support</li><li>Heavy abstraction can hide bugs</li></ul></div>
+    </div>
+    <div class="fw-code-sample"><span class="kw">from</span> langchain.agents <span class="kw">import</span> <span class="fn">create_openai_functions_agent</span>
+llm = <span class="fn">ChatOpenAI</span>(model=<span class="str">"gpt-4o"</span>)
+agent = <span class="fn">create_openai_functions_agent</span>(llm, tools, prompt)
+result = agent.<span class="fn">invoke</span>({<span class="str">"input"</span>: <span class="str">"Fix VPN for priya.n"</span>})</div>
+  </div></div>
+  <div id="fw-langgraph" class="fw-panel"><div class="fw-detail">
+    <div class="fw-header"><div class="fw-emoji">🕸️</div><div><div class="fw-name">LangGraph</div><div class="fw-tagline">Stateful graph-based agents. Supports cycles, branching, checkpointing, and HITL gates.</div><div class="fw-chips"><span class="fw-chip tag-accent">Stateful</span><span class="fw-chip tag-pink">Cycles</span><span class="fw-chip tag-amber">HITL</span><span class="fw-chip tag-green">Checkpoints</span></div></div></div>
+    <div class="fw-pros-cons">
+      <div><div class="fw-list-title pros">Strengths</div><ul class="fw-list pros"><li>Full state graph + conditional edges</li><li>Resumable from any checkpoint</li><li>Native HITL interrupt/approve</li><li>Sub-graph composition</li></ul></div>
+      <div><div class="fw-list-title cons">Weaknesses</div><ul class="fw-list cons"><li>Steeper learning curve</li><li>More boilerplate</li><li>Overkill for simple linear tasks</li></ul></div>
+    </div>
+    <div class="fw-code-sample"><span class="kw">from</span> langgraph.graph <span class="kw">import</span> <span class="fn">StateGraph</span>, END
+graph = <span class="fn">StateGraph</span>(AgentState)
+graph.<span class="fn">add_node</span>(<span class="str">"llm"</span>, call_llm)
+graph.<span class="fn">add_node</span>(<span class="str">"tools"</span>, run_tools)
+graph.<span class="fn">add_conditional_edges</span>(<span class="str">"llm"</span>, should_continue,
+    {<span class="str">"continue"</span>: <span class="str">"tools"</span>, <span class="str">"end"</span>: END})
+graph.<span class="fn">add_edge</span>(<span class="str">"tools"</span>, <span class="str">"llm"</span>)  <span class="cm"># loop back!</span>
+app = graph.<span class="fn">compile</span>(checkpointer=memory)</div>
+  </div></div>
+  <div id="fw-autogen" class="fw-panel"><div class="fw-detail">
+    <div class="fw-header"><div class="fw-emoji">🤖</div><div><div class="fw-name">AutoGen (Microsoft)</div><div class="fw-tagline">Multi-agent chat framework. Agents talk to each other to solve problems.</div><div class="fw-chips"><span class="fw-chip tag-cyan">Multi-Agent</span><span class="fw-chip tag-green">Code Exec</span><span class="fw-chip tag-amber">Conversational</span></div></div></div>
+    <div class="fw-pros-cons">
+      <div><div class="fw-list-title pros">Strengths</div><ul class="fw-list pros"><li>Natural multi-agent conversations</li><li>Built-in code writing &amp; execution</li><li>Great for research tasks</li><li>Human proxy for HITL</li></ul></div>
+      <div><div class="fw-list-title cons">Weaknesses</div><ul class="fw-list cons"><li>Conversation-centric, not graph</li><li>Harder to control exact flow</li><li>Less production-hardened</li></ul></div>
+    </div>
+    <div class="fw-code-sample">assistant = <span class="fn">AssistantAgent</span>(<span class="str">"analyst"</span>, llm_config=cfg)
+human = <span class="fn">UserProxyAgent</span>(<span class="str">"human"</span>, code_execution_config={...})
+human.<span class="fn">initiate_chat</span>(assistant,
+    message=<span class="str">"Analyse Q3 revenue anomalies"</span>)</div>
+  </div></div>
+  <div id="fw-openai" class="fw-panel"><div class="fw-detail">
+    <div class="fw-header"><div class="fw-emoji">⚡</div><div><div class="fw-name">OpenAI Agents SDK</div><div class="fw-tagline">Hosted agent runtime with built-in tools and handoffs. Used in today's lab.</div><div class="fw-chips"><span class="fw-chip tag-accent">Hosted</span><span class="fw-chip tag-green">Handoffs</span><span class="fw-chip tag-cyan">Built-in Tools</span></div></div></div>
+    <div class="fw-pros-cons">
+      <div><div class="fw-list-title pros">Strengths</div><ul class="fw-list pros"><li>Minimal setup — hosted</li><li>Native agent handoffs</li><li>Web search + code interpreter built in</li><li>Used in today's VPN lab</li></ul></div>
+      <div><div class="fw-list-title cons">Weaknesses</div><ul class="fw-list cons"><li>OpenAI-only (vendor lock-in)</li><li>Less control over internals</li><li>Cost at scale</li></ul></div>
+    </div>
+    <div class="fw-code-sample"><span class="cm"># Function calling — model picks tool + args</span>
+response = client.chat.completions.<span class="fn">create</span>(
+    model=<span class="str">"gpt-4o"</span>,
+    tools=tool_schemas,
+    messages=history
+)</div>
+  </div></div>
+  <div id="fw-crewai" class="fw-panel"><div class="fw-detail">
+    <div class="fw-header"><div class="fw-emoji">👥</div><div><div class="fw-name">CrewAI</div><div class="fw-tagline">Role-based agent crews. Define agents with job titles, goals, backstories.</div><div class="fw-chips"><span class="fw-chip tag-pink">Role-Based</span><span class="fw-chip tag-amber">Task Assignment</span><span class="fw-chip tag-green">Crew Orchestration</span></div></div></div>
+    <div class="fw-pros-cons">
+      <div><div class="fw-list-title pros">Strengths</div><ul class="fw-list pros"><li>Intuitive — mimics org structures</li><li>Fast multi-agent prototyping</li><li>Great for content &amp; research crews</li></ul></div>
+      <div><div class="fw-list-title cons">Weaknesses</div><ul class="fw-list cons"><li>Less granular state control</li><li>Not ideal for stateful long-running tasks</li><li>Younger ecosystem</li></ul></div>
+    </div>
+    <div class="fw-code-sample">researcher = <span class="fn">Agent</span>(role=<span class="str">"Research Analyst"</span>,
+    goal=<span class="str">"Find VPN issue root cause"</span>,
+    tools=[search_tool, db_tool])
+task = <span class="fn">Task</span>(description=<span class="str">"Diagnose INC-10422"</span>, agent=researcher)
+<span class="fn">Crew</span>(agents=[researcher], tasks=[task]).<span class="fn">kickoff</span>()</div>
+  </div></div>
+</section>
+
+<section id="s-lcvslg" class="section">
+  <div class="sec-header">
+    <div class="sec-tag">Module 6</div>
+    <h2 class="sec-title">LangChain vs LangGraph</h2>
+    <p class="sec-sub">Same family, very different superpowers. Know when to use which.</p>
+  </div>
+  <div class="row" style="margin-bottom:20px">
+    <div class="card" style="border-color:var(--cyan)">
+      <div class="card-tag tag-cyan">🦜 LangChain</div>
+      <div class="card-title mt-8">Linear Chains</div>
+      <div class="card-body mt-8">Input → Step 1 → Step 2 → Output. Like an assembly line. Great for RAG pipelines, simple Q&amp;A, summarization.</div>
+    </div>
+    <div style="display:flex;align-items:center;justify-content:center;font-size:28px;flex:0 0 40px;color:var(--text3)">→</div>
+    <div class="card" style="border-color:var(--accent)">
+      <div class="card-tag tag-accent">🕸️ LangGraph</div>
+      <div class="card-title mt-8">Directed State Graphs</div>
+      <div class="card-body mt-8">Nodes connected by conditional edges. Supports loops, branches, parallel paths. Built for complex agents that reason and retry.</div>
+    </div>
+  </div>
+  <table class="cmp-table">
+    <thead><tr><th>Feature</th><th class="col-lc">🦜 LangChain</th><th class="col-lg">🕸️ LangGraph</th></tr></thead>
+    <tbody>
+      <tr><td>Execution model</td><td class="col-lc">Linear chain / DAG</td><td class="col-lg">Directed state graph (cycles OK)</td></tr>
+      <tr><td>State management</td><td class="col-lc">Stateless per call</td><td class="col-lg">Persistent typed state object</td></tr>
+      <tr><td>Loops / cycles</td><td class="col-lc">❌ Not native</td><td class="col-lg">✅ First-class citizen</td></tr>
+      <tr><td>Checkpointing</td><td class="col-lc">Manual</td><td class="col-lg">Built-in (SQLite / Redis)</td></tr>
+      <tr><td>Human-in-the-loop</td><td class="col-lc">Requires custom code</td><td class="col-lg">Native interrupt / resume</td></tr>
+      <tr><td>Best for</td><td class="col-lc">RAG, Q&amp;A, pipelines</td><td class="col-lg">Complex agents, HITL, multi-step</td></tr>
+    </tbody>
+  </table>
+  <div class="highlight-box mt-24"><strong>Rule of thumb:</strong> Start with LangChain for pipelines (input → output). Upgrade to LangGraph when your agent needs to loop, branch on conditions, checkpoint mid-run, or pause for human approval. <em>The VPN lab uses LangGraph's state machine design with OpenAI function calling.</em></div>
+</section>
+
+<section id="s-multi" class="section">
+  <div class="sec-header">
+    <div class="sec-tag">Module 7</div>
+    <h2 class="sec-title">Multi-Agent Systems</h2>
+    <p class="sec-sub">One agent isn't always enough. See how agents collaborate.</p>
+  </div>
+  <div class="tab-bar">
+    <div class="tab-btn active" onclick="switchTab(this,'ma-orch')">🎯 Orchestrator-Worker</div>
+    <div class="tab-btn" onclick="switchTab(this,'ma-peer')">💬 Peer-to-Peer</div>
+    <div class="tab-btn" onclick="switchTab(this,'ma-super')">👔 Supervisor</div>
+    <div class="tab-btn" onclick="switchTab(this,'ma-handoff')">🤝 Handoff Chain</div>
+  </div>
+  <div id="tab-ma-orch" class="tab-pane active">
+    <div class="agent-flow">
+      <div class="agent-box" style="border-color:var(--accent)"><div class="ab-icon">🎯</div>Orchestrator<div class="ab-role">Plans &amp; delegates</div></div>
+      <div class="flow-arrow">→</div>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <div class="agent-box"><div class="ab-icon">📊</div>Data Agent<div class="ab-role">Fetches data</div></div>
+        <div class="agent-box"><div class="ab-icon">✍️</div>Writer Agent<div class="ab-role">Drafts report</div></div>
+        <div class="agent-box"><div class="ab-icon">✅</div>QA Agent<div class="ab-role">Reviews output</div></div>
+      </div>
+    </div>
+    <div class="highlight-box mt-16"><strong>Pattern:</strong> One smart orchestrator breaks the task into sub-tasks and assigns each to a specialist worker. Results flow back for synthesis. Used in Deloitte audit automation pipelines.</div>
+  </div>
+  <div id="tab-ma-peer" class="tab-pane">
+    <div class="agent-flow">
+      <div class="agent-box" style="border-color:var(--cyan)"><div class="ab-icon">🤖</div>Agent A<div class="ab-role">Researcher</div></div>
+      <div class="flow-arrow bidirectional"><span>⇄</span><span style="font-size:10px;color:var(--text3)">chat</span></div>
+      <div class="agent-box" style="border-color:var(--cyan)"><div class="ab-icon">🤖</div>Agent B<div class="ab-role">Critic</div></div>
+      <div class="flow-arrow bidirectional"><span>⇄</span></div>
+      <div class="agent-box" style="border-color:var(--cyan)"><div class="ab-icon">🤖</div>Agent C<div class="ab-role">Writer</div></div>
+    </div>
+    <div class="highlight-box mt-16"><strong>Pattern:</strong> Agents communicate directly in a chat-like structure. No central controller. Used in AutoGen-style debate and multi-perspective analysis tasks.</div>
+  </div>
+  <div id="tab-ma-super" class="tab-pane">
+    <div class="agent-flow">
+      <div class="agent-box" style="border-color:var(--accent)"><div class="ab-icon">👔</div>Supervisor<div class="ab-role">Routes &amp; decides</div></div>
+      <div class="flow-arrow">→</div>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <div class="agent-box"><div class="ab-icon">🔧</div>IT Subgraph<div class="ab-role">Handles IT tasks</div></div>
+        <div class="agent-box"><div class="ab-icon">💰</div>Finance Subgraph<div class="ab-role">Handles finance</div></div>
+      </div>
+    </div>
+    <div class="highlight-box mt-16"><strong>Pattern (LangGraph):</strong> Supervisor node reads the goal and routes to the appropriate subgraph. Each subgraph has its own state and tools. Clean separation of concerns.</div>
+  </div>
+  <div id="tab-ma-handoff" class="tab-pane">
+    <div class="agent-flow">
+      <div class="agent-box" style="border-color:var(--green)"><div class="ab-icon">🎫</div>Triage<div class="ab-role">Classifies</div></div>
+      <div class="flow-arrow">→</div>
+      <div class="agent-box" style="border-color:var(--amber)"><div class="ab-icon">🔍</div>Diagnose<div class="ab-role">Root cause</div></div>
+      <div class="flow-arrow">→</div>
+      <div class="agent-box" style="border-color:var(--red)"><div class="ab-icon">🔧</div>Remediate<div class="ab-role">Applies fix</div></div>
+      <div class="flow-arrow">→</div>
+      <div class="agent-box" style="border-color:var(--accent)"><div class="ab-icon">📧</div>Notify<div class="ab-role">Updates user</div></div>
+    </div>
+    <div class="highlight-box mt-16"><strong>Pattern:</strong> Each agent completes its part and hands off with context to the next. Like a relay race. Clean for sequential domain handoffs in ITSM workflows.</div>
+  </div>
+</section>
+
+<section id="s-secure" class="section">
+  <div class="sec-header">
+    <div class="sec-tag">Module 8</div>
+    <h2 class="sec-title">Secure Agentic Coding</h2>
+    <p class="sec-sub">Agents with real tools need real guardrails. Flip each card to see the correct pattern.</p>
+  </div>
+  <div class="cards-grid cards-3">
+    <div class="flip-wrap" onclick="this.classList.toggle('flipped')">
+      <div class="flip-inner">
+        <div class="flip-front"><div class="card-tag tag-red">🔑 Secrets</div><div class="card-title" style="margin-top:8px">Never in Prompts</div><div class="card-body">API keys, passwords, tokens — NEVER passed as prompt text to the LLM.</div><div class="flip-hint">flip for correct pattern</div></div>
+        <div class="flip-back"><div class="card-tag tag-green">✓ Correct Pattern</div><div class="card-body" style="margin-top:8px;font-family:monospace;font-size:12px"><span style="color:var(--red)">❌ "key is sk-abc123"</span><br><br><span style="color:var(--green)">✓ os.environ["OPENAI_KEY"]</span><br><span style="color:var(--green)">✓ Azure Key Vault</span></div></div>
+      </div>
+    </div>
+    <div class="flip-wrap" onclick="this.classList.toggle('flipped')">
+      <div class="flip-inner">
+        <div class="flip-front"><div class="card-tag tag-amber">🛡️ Least Privilege</div><div class="card-title" style="margin-top:8px">Tool Scope</div><div class="card-body">Each tool should only do exactly what it needs. No blanket admin access.</div><div class="flip-hint">flip for example</div></div>
+        <div class="flip-back"><div class="card-tag tag-amber">Example</div><div class="card-body" style="margin-top:8px">❌ Full DB write access<br><br>✅ Read-only query tool<br>✅ Scoped write to ticket table only<br>✅ No DROP or ALTER permissions</div></div>
+      </div>
+    </div>
+    <div class="flip-wrap" onclick="this.classList.toggle('flipped')">
+      <div class="flip-inner">
+        <div class="flip-front"><div class="card-tag tag-accent">✅ Validate I/O</div><div class="card-title" style="margin-top:8px">Guard Every Tool</div><div class="card-body">Validate tool inputs before execution, sanitize outputs before using them.</div><div class="flip-hint">flip for pattern</div></div>
+        <div class="flip-back"><div class="card-tag tag-accent">Guard Pattern</div><div class="card-body" style="margin-top:8px;font-family:monospace;font-size:12px;color:var(--text2)"><span style="color:var(--cyan)">validate_args</span>(args)<br>result = tool(args)<br><span style="color:var(--cyan)">sanitize</span>(result)<br><span style="color:var(--cyan)">log_tool_call</span>(tool, args, result)</div></div>
+      </div>
+    </div>
+    <div class="flip-wrap" onclick="this.classList.toggle('flipped')">
+      <div class="flip-inner">
+        <div class="flip-front"><div class="card-tag tag-pink">🛑 HITL Gates</div><div class="card-title" style="margin-top:8px">Human Approval</div><div class="card-body">Before any irreversible action — password reset, data deletion, system change.</div><div class="flip-hint">flip for lab example</div></div>
+        <div class="flip-back"><div class="card-tag tag-pink">In Today's Lab</div><div class="card-body" style="margin-top:8px">VPN agent hits <strong style="color:var(--accent2)">APPROVE_RESET</strong> before executing credential reset.<br><br>Waits for human APPROVE or DENY before proceeding.</div></div>
+      </div>
+    </div>
+    <div class="flip-wrap" onclick="this.classList.toggle('flipped')">
+      <div class="flip-inner">
+        <div class="flip-front"><div class="card-tag tag-cyan">📝 Audit Logs</div><div class="card-title" style="margin-top:8px">Full Traceability</div><div class="card-body">Every tool call, every decision, every outcome — logged with timestamp.</div><div class="flip-hint">flip for why it matters</div></div>
+        <div class="flip-back"><div class="card-tag tag-cyan">Why It Matters</div><div class="card-body" style="margin-top:8px">✓ SOC 2 / ISO 27001 compliance<br>✓ Debug failures quickly<br>✓ Replay agent execution<br>✓ Prove what the agent did<br>✓ Required for enterprise sign-off</div></div>
+      </div>
+    </div>
+    <div class="flip-wrap" onclick="this.classList.toggle('flipped')">
+      <div class="flip-inner">
+        <div class="flip-front"><div class="card-tag tag-red">⏱️ Rate Limits</div><div class="card-title" style="margin-top:8px">Loop Guardrails</div><div class="card-body">Without caps, agents loop forever. Always set MAX_STEPS and MAX_RETRIES.</div><div class="flip-hint">flip for lab values</div></div>
+        <div class="flip-back"><div class="card-tag tag-red">Lab Defaults</div><div class="card-body" style="margin-top:8px;font-family:monospace;font-size:12.5px;color:var(--text2)">MAX_STEPS = <span style="color:var(--amber)">8</span><br>MAX_RETRIES = <span style="color:var(--amber)">2</span><br>TIMEOUT_SEC = <span style="color:var(--amber)">30</span><br><br><span style="color:var(--text3);font-size:11px">Exceed → escalate to human</span></div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="s-lab" class="section">
+  <div class="sec-header">
+    <div class="sec-tag">Module 9 — Live Lab</div>
+    <h2 class="sec-title">VPN Agent: INC-10422</h2>
+    <p class="sec-sub">A real Deloitte-style ITSM agent. Click Run Agent to watch it think and act.</p>
+  </div>
+  <div class="row">
+    <div style="flex:0 0 270px">
+      <div class="card" style="border-color:var(--amber)">
+        <div class="card-tag tag-amber">🎫 Ticket INC-10422</div>
+        <div class="emoji-bullet mt-8"><span>👤</span><span><strong>User:</strong> priya.n</span></div>
+        <div class="emoji-bullet"><span>🏢</span><span><strong>Dept:</strong> Audit Analytics</span></div>
+        <div class="emoji-bullet"><span>🔴</span><span><strong>Priority:</strong> High</span></div>
+        <div class="emoji-bullet"><span>📋</span><span><strong>Issue:</strong> VPN not connecting since 09:15</span></div>
+        <div class="emoji-bullet"><span>📌</span><span><strong>Location:</strong> Chennai office</span></div>
+      </div>
+      <div class="card mt-16">
+        <div class="card-tag tag-green">🔧 6 Tools Available</div>
+        <div style="margin-top:8px">
+          <div class="emoji-bullet"><span>1️⃣</span><span><code style="font-size:11px;color:var(--cyan)">get_ticket_details</code></span></div>
+          <div class="emoji-bullet"><span>2️⃣</span><span><code style="font-size:11px;color:var(--cyan)">check_vpn_status</code></span></div>
+          <div class="emoji-bullet"><span>3️⃣</span><span><code style="font-size:11px;color:var(--cyan)">check_user_account</code></span></div>
+          <div class="emoji-bullet"><span>4️⃣</span><span><code style="font-size:11px;color:var(--cyan)">approve_reset</code> 🛑 HITL</span></div>
+          <div class="emoji-bullet"><span>5️⃣</span><span><code style="font-size:11px;color:var(--cyan)">reset_vpn_credentials</code></span></div>
+          <div class="emoji-bullet"><span>6️⃣</span><span><code style="font-size:11px;color:var(--cyan)">update_ticket</code></span></div>
+        </div>
+      </div>
+    </div>
+    <div style="flex:1">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+        <div class="label">Agent Terminal — Live Simulation</div>
+        <button class="react-btn primary" onclick="runLabSim()" id="lab-play-btn">▶ Run Agent</button>
+      </div>
+      <div id="lab-terminal">
+        <div class="term-line term-sys">$ agent run --ticket INC-10422 --max-steps 8</div>
+        <div class="term-line" style="color:var(--text2)">Click "Run Agent" above to start the simulation →</div>
+      </div>
+    </div>
+  </div>
+  <div class="divider"></div>
+  <div class="label">Agent Loop (from notebook)</div>
+  <div class="code-block"><span class="kw">def</span> <span class="fn">run_agent</span>(ticket_id: str) -> str:
+    history = [system_prompt]
+    steps = <span class="num">0</span>
+    <span class="kw">while</span> steps &lt; MAX_STEPS:
+        response = client.chat.completions.<span class="fn">create</span>(
+            model=<span class="str">"gpt-4o"</span>, tools=TOOL_SCHEMAS, messages=history
+        )
+        msg = response.choices[<span class="num">0</span>].message
+        <span class="kw">if not</span> msg.tool_calls:          <span class="cm"># no tool → final answer</span>
+            <span class="kw">return</span> msg.content
+        <span class="kw">for</span> call <span class="kw">in</span> msg.tool_calls:
+            tool_name = call.function.name
+            args = json.<span class="fn">loads</span>(call.function.arguments)
+            <span class="kw">if</span> tool_name == <span class="str">"approve_reset"</span>:   <span class="cm"># HITL gate</span>
+                decision = <span class="fn">input</span>(<span class="str">"APPROVE or DENY? "</span>)
+                result = {<span class="str">"approved"</span>: decision == <span class="str">"APPROVE"</span>}
+            <span class="kw">else</span>:
+                result = TOOLS[tool_name](**args)    <span class="cm"># call tool</span>
+            history.<span class="fn">append</span>({<span class="str">"role"</span>: <span class="str">"tool"</span>, <span class="str">"content"</span>: str(result)})
+        steps += <span class="num">1</span></div>
+</section>
+
+<section id="s-handson" class="section">
+  <div class="sec-header">
+    <div class="sec-tag">Module 10 — Hands-On</div>
+    <h2 class="sec-title">Lab Paths &amp; What to Try</h2>
+    <p class="sec-sub">Three paths, different challenges. Pick your level.</p>
+  </div>
+  <div class="cards-grid cards-3">
+    <div class="card" style="border-color:var(--green)">
+      <div class="card-tag tag-green">🟢 Path A — Happy Path</div>
+      <div class="card-title mt-8">Core Flow</div>
+      <div class="card-body">Run agent on INC-10422, approve the reset, verify ticket closed.</div>
+      <div class="step-list">
+        <div class="step-item"><div class="step-num" style="background:var(--green)">1</div><div><div class="step-title">Open notebook</div><div class="step-desc">block2_vpn_agent.ipynb</div></div></div>
+        <div class="step-item"><div class="step-num" style="background:var(--green)">2</div><div><div class="step-title">Run all cells</div><div class="step-desc">Set OPENAI_API_KEY first</div></div></div>
+        <div class="step-item"><div class="step-num" style="background:var(--green)">3</div><div><div class="step-title">Type APPROVE</div><div class="step-desc">When the HITL gate fires</div></div></div>
+        <div class="step-item"><div class="step-num" style="background:var(--green)">4</div><div><div class="step-title">Verify resolution</div><div class="step-desc">Agent closes and documents ticket</div></div></div>
+      </div>
+    </div>
+    <div class="card" style="border-color:var(--amber)">
+      <div class="card-tag tag-amber">🟡 Path B — Deny &amp; Escalate</div>
+      <div class="card-title mt-8">Rejection Flow</div>
+      <div class="card-body">Type DENY at the approval gate. Watch the agent handle rejection and escalate gracefully.</div>
+      <div class="step-list">
+        <div class="step-item"><div class="step-num" style="background:var(--amber)">1</div><div><div class="step-title">Run same notebook</div><div class="step-desc">Same starting point</div></div></div>
+        <div class="step-item"><div class="step-num" style="background:var(--amber)">2</div><div><div class="step-title">Type DENY</div><div class="step-desc">When approval prompt appears</div></div></div>
+        <div class="step-item"><div class="step-num" style="background:var(--amber)">3</div><div><div class="step-title">Observe fallback</div><div class="step-desc">Agent escalates, updates ticket with reason</div></div></div>
+        <div class="step-item"><div class="step-num" style="background:var(--amber)">4</div><div><div class="step-title">Check SQLite logs</div><div class="step-desc">Full audit trail of decision</div></div></div>
+      </div>
+    </div>
+    <div class="card" style="border-color:var(--accent)">
+      <div class="card-tag tag-accent">🔵 Path C — Gradio UI</div>
+      <div class="card-title mt-8">Web Interface</div>
+      <div class="card-body">Launch the Gradio UI. Interact through a web chat instead of the terminal.</div>
+      <div class="step-list">
+        <div class="step-item"><div class="step-num">1</div><div><div class="step-title">Find Gradio cell</div><div class="step-desc">Look for gr.Interface or gr.ChatInterface</div></div></div>
+        <div class="step-item"><div class="step-num">2</div><div><div class="step-title">Run it</div><div class="step-desc">Opens on localhost:7860</div></div></div>
+        <div class="step-item"><div class="step-num">3</div><div><div class="step-title">Enter ticket ID</div><div class="step-desc">Type "INC-10422" in the chat</div></div></div>
+        <div class="step-item"><div class="step-num">4</div><div><div class="step-title">Approve via UI</div><div class="step-desc">Approval button appears in the interface</div></div></div>
+      </div>
+    </div>
+  </div>
+  <div class="divider"></div>
+  <div class="label">What to Observe in Each Run</div>
+  <div class="cards-grid cards-4 mt-8">
+    <div class="card"><div class="card-icon">🧠</div><div class="card-title">LLM Reasoning</div><div class="card-body">Watch the thought steps before each tool call. The model explains why it picks each tool.</div></div>
+    <div class="card"><div class="card-icon">🔧</div><div class="card-title">Tool Chaining</div><div class="card-body">Each observation feeds the next thought. No step is wasted.</div></div>
+    <div class="card"><div class="card-icon">🛑</div><div class="card-title">HITL Gate</div><div class="card-body">The agent fully stops and waits. It cannot proceed without explicit human input.</div></div>
+    <div class="card"><div class="card-icon">📝</div><div class="card-title">Audit Trail</div><div class="card-body">Check the SQLite DB after the run — full history of every tool call preserved.</div></div>
+  </div>
+  <div class="highlight-box mt-24" style="border-color:var(--accent)"><strong>🏆 Stretch Challenge:</strong> Modify the agent to handle a second ticket type — "laptop slow" or "email not syncing." Add 2 new tools and update the system prompt. Can you make it route to the right tool set based on ticket category automatically?</div>
+</section>
+
+</div>
+</div>
+<script>
+const allSecs = document.querySelectorAll('.section');
+const allNavs = document.querySelectorAll('.nav-item');
+function nav(id) {
+  allSecs.forEach(s => s.classList.remove('active'));
+  allNavs.forEach(n => n.classList.remove('active'));
+  const sec = document.getElementById(id);
+  if (sec) sec.classList.add('active');
+  const navEl = document.querySelector('[data-s="'+id+'"]');
+  if (navEl) navEl.classList.add('active');
+  const idx = Array.from(allSecs).findIndex(s => s.id === id);
+  document.getElementById('progress-fill').style.width = Math.round((idx+1)/allSecs.length*100)+'%';
+  document.getElementById('main').scrollTop = 0;
+}
+allNavs.forEach(n => n.addEventListener('click', () => nav(n.dataset.s)));
+
+function switchTab(btn, id) {
+  const sec = btn.closest('.section');
+  sec.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  sec.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+  const t = document.getElementById('tab-'+id);
+  if (t) t.classList.add('active');
+}
+function switchFw(btn, id) {
+  document.querySelectorAll('.fw-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.fw-panel').forEach(p => p.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById(id).classList.add('active');
+}
+const autoDetails = [
+  {t:'Assisted — Level 1', b:'<strong>Example:</strong> GitHub Copilot suggests code. The developer reviews and accepts each suggestion. Zero autonomous actions. Full human control. <strong>Risk:</strong> Minimal.'},
+  {t:'Semi-Autonomous — Level 2', b:'<strong>Example:</strong> IT agent auto-diagnoses a VPN issue, then pauses for human approval before executing a password reset. <strong>This is the Deloitte sweet spot</strong> — speed + accountability. Risk is bounded by HITL gates.'},
+  {t:'Autonomous — Level 3', b:'<strong>Example:</strong> Auto-scaling cloud infra that detects load spikes and provisions servers with no human notification. <strong>Only appropriate</strong> when the domain is well-defined, risk is low, and rollback is instant.'}
+];
+function showAutonomy(idx) {
+  const d = autoDetails[idx];
+  const box = document.getElementById('autonomy-detail');
+  box.innerHTML = '<strong style="color:var(--accent2)">'+d.t+'</strong><br><br>'+d.b;
+  box.style.display = 'block';
+  document.querySelectorAll('[id^="auto-"]').forEach((c,i) => c.style.borderColor = i===idx?'var(--accent)':'');
+}
+const archInfo = {
+  user:{t:'👤 User / Goal',b:'Everything starts with a human goal. In the VPN lab: <em>"INC-10422: priya.n cannot connect to VPN since 09:15."</em> The agent receives this as a natural language task and begins planning.'},
+  llm:{t:'🧠 LLM — The Brain',b:'The language model reads the full context (goal + history + observations) and decides what to do next. It picks a tool, crafts the arguments, or outputs a final answer. In the lab: GPT-4o with function calling.'},
+  planner:{t:'📋 Planner',b:'Controls the sequence of steps. Decides what to do first (check ticket → check VPN status → check account → diagnose → decide action). Sets stop conditions: MAX_STEPS=8, MAX_RETRIES=2.'},
+  tools:{t:'🔧 Tools',b:"The agent's hands. Real functions that call real systems: get_ticket_details (reads SQLite), check_vpn_status (simulates RADIUS), check_user_account (checks AD), reset_vpn_credentials, update_ticket. Each returns a structured observation."},
+  memory:{t:'💾 Memory',b:"Short-term: the conversation history array passed to every LLM call. Each tool result is added to history. Long-term: not used in this lab, but in production would include a vector DB with past similar incidents for faster resolution."},
+  env:{t:'🌍 Environment',b:'The real systems the agent interacts with: SQLite ticket database, simulated VPN server, Active Directory. Every tool call reaches out and brings back an observation that changes what the agent does next.'},
+  hitl:{t:'🛑 Human-in-the-Loop Gate',b:"Before any irreversible action (VPN credential reset), the agent calls approve_reset() and waits. A human must type APPROVE or DENY. Non-negotiable in Deloitte production deployments — agents can suggest and diagnose, but humans authorize."}
+};
+function showArch(key) {
+  const d = archInfo[key];
+  document.getElementById('arch-info').innerHTML = '<div class="arch-info-title">'+d.t+'</div><div class="arch-info-body">'+d.b+'</div>';
+}
+const reactSteps = [
+  {l:'💭 Thought 1',c:'<strong>💭 Thought:</strong> I need to handle ticket INC-10422. The user priya.n reports VPN not connecting since 09:15. First, I should retrieve the full ticket details to understand scope before doing anything else.<div class="react-code">action: get_ticket_details\nargs: { "ticket_id": "INC-10422" }</div>'},
+  {l:'🔧 Action 1',c:'<strong>🔧 Action:</strong> Calling <code style="color:var(--cyan)">get_ticket_details</code> with ticket_id = "INC-10422"<div class="react-code">→ Querying SQLite ticket database...\n→ Tool executing...</div>'},
+  {l:'👁️ Observe 1',c:'<strong>👁️ Observation:</strong> Ticket retrieved successfully.<div class="react-code">{ "id": "INC-10422", "user": "priya.n",\n  "dept": "Audit Analytics",\n  "issue": "VPN not connecting since 09:15",\n  "priority": "HIGH", "location": "Chennai" }</div><span style="color:var(--green)">✓ Observation injected into history. Next thought will use this.</span>'},
+  {l:'💭 Thought 2',c:'<strong>💭 Thought:</strong> I have ticket context. User is in Audit Analytics — high priority. VPN stopped at 09:15. Could be expired certificate, account lock, or server-side issue. I should check VPN status and user account. Let me start with VPN status.<div class="react-code">action: check_vpn_status\nargs: { "user_id": "priya.n" }</div>'},
+  {l:'🔧 Action 2',c:'<strong>🔧 Action:</strong> Calling <code style="color:var(--cyan)">check_vpn_status</code> and <code style="color:var(--cyan)">check_user_account</code><div class="react-code">→ Checking VPN gateway RADIUS auth...\n→ Checking Active Directory account...\n→ Executing both tools...</div>'},
+  {l:'👁️ Observe 2',c:'<strong>👁️ Observation:</strong> Results received from both tools.<div class="react-code">VPN: { "status": "AUTH_FAILED",\n  "last_success": "2024-01-14 08:50",\n  "error": "credentials_expired" }\nAccount: { "locked": false,\n  "password_age_days": 91, "max_age": 90 }</div><span style="color:var(--amber)">⚠️ Password expired 1 day ago. This is the root cause!</span>'},
+  {l:'🛑 HITL',c:'<strong>🛑 HITL Gate Triggered:</strong><div class="react-code" style="border-color:var(--red);color:var(--red)">action: approve_reset\nargs: { "user": "priya.n",\n  "reason": "VPN auth failure due to expired password (age: 91d).\n  Recommend immediate credential reset." }</div><span style="color:var(--accent2)">→ Agent paused. Waiting for human APPROVE / DENY...</span><br><br><span style="color:var(--green)">If APPROVED → reset_vpn_credentials → update_ticket → DONE ✓</span>'}
+];
+let rIdx = 0;
+function renderReact() {
+  const s = reactSteps[rIdx];
+  document.getElementById('react-content').innerHTML = s.c;
+  document.querySelectorAll('.react-step-tab').forEach((t,i) => {
+    t.classList.remove('active','done');
+    if(i<rIdx) t.classList.add('done');
+    if(i===rIdx) t.classList.add('active');
+  });
+  document.getElementById('react-fill').style.width = ((rIdx+1)/reactSteps.length*100)+'%';
+  document.getElementById('react-next-btn').textContent = rIdx===reactSteps.length-1?'↺ Restart':'Next →';
+}
+function reactNext(){rIdx=(rIdx+1)%reactSteps.length;renderReact();}
+function reactPrev(){rIdx=(rIdx-1+reactSteps.length)%reactSteps.length;renderReact();}
+function reactGo(i){rIdx=i;renderReact();}
+renderReact();
+const labLines = [
+  {c:'term-sys',t:'$ agent run --ticket INC-10422 --max-steps 8',d:0},
+  {c:'term-sys',t:'Initializing VPN Support Agent...',d:400},
+  {c:'term-sys',t:'──────────────────────────────────────',d:700},
+  {c:'term-think',t:'[STEP 1] 💭 Thought: Retrieve ticket details first.',d:1200},
+  {c:'term-action',t:'   → Action: get_ticket_details(ticket_id="INC-10422")',d:1700},
+  {c:'term-obs',t:'   ✓ Obs: user=priya.n, dept=Audit Analytics, priority=HIGH',d:2400},
+  {c:'term-think',t:'[STEP 2] 💭 Thought: VPN failure at 09:15. Check VPN status and account.',d:3000},
+  {c:'term-action',t:'   → Action: check_vpn_status(user_id="priya.n")',d:3500},
+  {c:'term-obs',t:'   ✓ Obs: AUTH_FAILED — credentials_expired — last_success 08:50',d:4200},
+  {c:'term-action',t:'   → Action: check_user_account(user_id="priya.n")',d:4700},
+  {c:'term-obs',t:'   ✓ Obs: account_active=True, password_age=91d, max_age=90d',d:5400},
+  {c:'term-think',t:'[STEP 3] 💭 Thought: Root cause — password expired 1 day ago.',d:6000},
+  {c:'term-think',t:'          VPN auth fails because of this. Recommend credential reset.',d:6400},
+  {c:'term-action',t:'   → Action: approve_reset(user="priya.n", reason="expired password")',d:6900},
+  {c:'term-prompt',t:'⚡ HUMAN APPROVAL REQUIRED:',d:7400},
+  {c:'term-prompt',t:'   Reset credentials for priya.n (Audit Analytics).',d:7700},
+  {c:'term-approve',t:'   [Admin input: APPROVE]',d:8500},
+  {c:'term-action',t:'[STEP 4] → Action: reset_vpn_credentials(user_id="priya.n")',d:9200},
+  {c:'term-obs',t:'   ✓ Obs: credentials_reset=True, temp_password="TempV@2024!"',d:10000},
+  {c:'term-action',t:'[STEP 5] → Action: update_ticket(status="RESOLVED")',d:10600},
+  {c:'term-obs',t:'   ✓ Obs: Ticket INC-10422 closed. Resolution logged.',d:11300},
+  {c:'term-sys',t:'──────────────────────────────────────',d:11900},
+  {c:'term-obs',t:'✅ AGENT DONE in 5 steps (max: 8). Ticket resolved.',d:12200},
+  {c:'term-sys',t:'   Temp password sent to priya.n@deloitte.com',d:12600},
+];
+function runLabSim() {
+  const term = document.getElementById('lab-terminal');
+  const btn = document.getElementById('lab-play-btn');
+  btn.disabled = true; btn.textContent = '⏳ Running...';
+  term.innerHTML = '';
+  labLines.forEach(({c,t,d}) => {
+    setTimeout(() => {
+      const div = document.createElement('div');
+      div.className = 'term-line '+c;
+      div.textContent = t;
+      term.appendChild(div);
+      term.scrollTop = term.scrollHeight;
+      if(d===labLines[labLines.length-1].d){btn.disabled=false;btn.textContent='↺ Run Again';}
+    }, d);
+  });
+}
+</script>
+</body>
+</html>
