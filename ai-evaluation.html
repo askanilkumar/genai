@@ -1,0 +1,780 @@
+<title>Eval Harness Console</title>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@500;600;700&family=Sora:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap">
+<style>
+/* ===== Tokens — deliberate single dark "console" theme ===== */
+:root{
+  --bg:#0B0F14;
+  --bg-panel:#121821;
+  --bg-panel-2:#171F2A;
+  --bg-code:#0D1319;
+  --border:#243040;
+  --border-strong:#34455C;
+  --text:#E7ECF2;
+  --text-muted:#8FA0B3;
+  --text-dim:#5C6B7E;
+  --accent:#5B8DEF;
+  --accent-soft:#152238;
+  --accent-strong:#84A9F7;
+  --pass:#34D399;
+  --pass-soft:#0F2A20;
+  --warn:#F5B942;
+  --warn-soft:#2E2410;
+  --fail:#F0636D;
+  --fail-soft:#301418;
+  --shadow:0 1px 2px rgba(0,0,0,.4), 0 12px 32px -16px rgba(0,0,0,.7);
+  --radius:14px;
+  --radius-sm:9px;
+}
+*{box-sizing:border-box;}
+html,body{background:var(--bg);}
+body{
+  color:var(--text);
+  font-family:"Sora",system-ui,-apple-system,Segoe UI,sans-serif;
+  font-size:16px;
+  line-height:1.6;
+  -webkit-font-smoothing:antialiased;
+}
+.wrap{max-width:1100px;margin-inline:auto;padding-inline:clamp(18px,4.5vw,48px);}
+h1,h2,h3,h4{font-family:"Instrument Sans",system-ui,sans-serif;font-weight:700;line-height:1.15;text-wrap:balance;margin:0;color:var(--text);}
+p{margin:0;}
+a{color:inherit;}
+.mono{font-family:"JetBrains Mono",ui-monospace,monospace;}
+::selection{background:var(--accent);color:#fff;}
+.stage-tag{
+  font-family:"JetBrains Mono",monospace;font-size:.72rem;letter-spacing:.12em;text-transform:uppercase;
+  color:var(--accent-strong);font-weight:600;display:inline-flex;align-items:center;gap:.6em;
+}
+.stage-tag::before{content:"//";color:var(--text-dim);}
+.lede{color:var(--text-muted);max-width:64ch;font-size:1.04rem;}
+.stage{padding-block:clamp(52px,8vw,92px);border-bottom:1px solid var(--border);position:relative;}
+.stage:last-of-type{border-bottom:none;}
+.stage-head{display:flex;flex-direction:column;gap:.9rem;margin-bottom:2.2rem;}
+.stage-head h2{font-size:clamp(1.6rem,3vw,2.3rem);}
+.reveal{opacity:0;transform:translateY(16px);transition:opacity .55s ease, transform .55s ease;}
+.reveal.is-visible{opacity:1;transform:translateY(0);}
+@media (prefers-reduced-motion: reduce){.reveal{opacity:1!important;transform:none!important;transition:none!important;}*{animation-duration:.01ms!important;}}
+
+/* progress + stage nav */
+.topbar{position:fixed;top:0;left:0;right:0;height:3px;background:var(--bg-panel);z-index:60;}
+.topbar-fill{height:100%;width:0%;background:linear-gradient(90deg,var(--accent),var(--pass));transition:width .1s linear;}
+.stagenav{position:sticky;top:3px;z-index:55;background:rgba(11,15,20,.92);backdrop-filter:blur(6px);border-bottom:1px solid var(--border);overflow-x:auto;scrollbar-width:none;}
+.stagenav::-webkit-scrollbar{display:none;}
+.stagenav-inner{display:flex;gap:.4rem;padding:.7rem clamp(18px,4.5vw,48px);min-width:max-content;}
+.stagenav-pill{font-family:"JetBrains Mono",monospace;font-size:.72rem;font-weight:600;letter-spacing:.03em;
+  border:1px solid var(--border);background:var(--bg-panel);color:var(--text-muted);border-radius:999px;
+  padding:.45em .95em;cursor:pointer;white-space:nowrap;display:flex;align-items:center;gap:.5em;transition:all .15s;}
+.stagenav-pill .n{color:var(--text-dim);}
+.stagenav-pill.active{border-color:var(--accent);color:var(--text);background:var(--accent-soft);}
+.stagenav-pill.active .n{color:var(--accent-strong);}
+.stagenav-pill:hover{border-color:var(--border-strong);}
+
+/* buttons/chips */
+.btn{font-family:"Instrument Sans",sans-serif;font-weight:700;font-size:.92rem;border-radius:9px;border:1px solid var(--accent);
+  background:var(--accent);color:#0B0F14;padding:.75em 1.35em;cursor:pointer;display:inline-flex;align-items:center;gap:.55em;transition:all .15s;}
+.btn:hover{filter:brightness(1.1);}
+.btn:active{transform:scale(.98);}
+.btn.ghost{background:transparent;color:var(--text);border-color:var(--border-strong);}
+.btn.ghost:hover{border-color:var(--accent);color:var(--accent-strong);}
+.btn:disabled{opacity:.4;cursor:not-allowed;}
+.btn:focus-visible,.chip:focus-visible,.stagenav-pill:focus-visible,.tab:focus-visible{outline:2px solid var(--accent-strong);outline-offset:2px;}
+.chip{font-family:"JetBrains Mono",monospace;font-size:.82rem;font-weight:500;border:1px solid var(--border-strong);
+  background:var(--bg-panel);color:var(--text);border-radius:9px;padding:.6em 1em;cursor:pointer;transition:all .15s;text-align:left;}
+.chip:hover{border-color:var(--accent);}
+.chip.selected{background:var(--accent-soft);border-color:var(--accent);color:var(--accent-strong);}
+.badge{font-family:"JetBrains Mono",monospace;font-size:.68rem;letter-spacing:.05em;text-transform:uppercase;font-weight:700;
+  padding:.28em .7em;border-radius:6px;display:inline-flex;align-items:center;gap:.4em;}
+.badge.pass{background:var(--pass-soft);color:var(--pass);}
+.badge.warn{background:var(--warn-soft);color:var(--warn);}
+.badge.fail{background:var(--fail-soft);color:var(--fail);}
+.badge.info{background:var(--accent-soft);color:var(--accent-strong);}
+.tag{font-family:"JetBrains Mono",monospace;font-size:.68rem;letter-spacing:.04em;text-transform:uppercase;background:var(--bg-panel-2);
+  border:1px solid var(--border);color:var(--text-muted);padding:.3em .65em;border-radius:6px;}
+
+/* panels */
+.panel{background:var(--bg-panel);border:1px solid var(--border);border-radius:var(--radius);padding:1.5rem;box-shadow:var(--shadow);}
+.grid{display:grid;gap:1rem;}
+.grid-2{grid-template-columns:repeat(2,1fr);}
+.grid-3{grid-template-columns:repeat(3,1fr);}
+.grid-4{grid-template-columns:repeat(4,1fr);}
+@media (max-width:820px){.grid-3,.grid-4{grid-template-columns:1fr 1fr;}}
+@media (max-width:560px){.grid-2,.grid-3,.grid-4{grid-template-columns:1fr;}}
+
+/* hero */
+.hero{position:relative;overflow:hidden;padding-block:clamp(56px,10vw,100px) clamp(48px,8vw,80px);border-bottom:1px solid var(--border);}
+.hero-grid-bg{position:absolute;inset:0;background-image:
+    linear-gradient(rgba(91,141,239,.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(91,141,239,.06) 1px, transparent 1px);
+  background-size:34px 34px;mask-image:radial-gradient(ellipse at 30% 20%, black 35%, transparent 75%);}
+.hero-glow{position:absolute;width:480px;height:480px;border-radius:50%;background:radial-gradient(circle,rgba(91,141,239,.22),transparent 70%);top:-160px;left:-100px;filter:blur(20px);}
+.hero-inner{position:relative;z-index:2;}
+.termline{font-family:"JetBrains Mono",monospace;font-size:.85rem;color:var(--pass);margin-bottom:1.2rem;display:flex;align-items:center;gap:.5em;}
+.termline .prompt{color:var(--text-dim);}
+.cursor{display:inline-block;width:8px;height:1.1em;background:var(--pass);animation:blink 1s steps(1) infinite;vertical-align:text-bottom;}
+@keyframes blink{50%{opacity:0;}}
+.hero h1{font-size:clamp(2.1rem,5.5vw,3.6rem);max-width:20ch;margin-bottom:1.1rem;}
+.hero .lede{font-size:1.12rem;}
+.hero-badges{display:flex;flex-wrap:wrap;gap:.6rem;margin-block:1.6rem;}
+.hero-actions{display:flex;gap:1rem;margin-top:1.8rem;flex-wrap:wrap;}
+
+/* spec card (DEFINE) */
+.spec-card{background:var(--bg-panel);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow);}
+.spec-titlebar{background:var(--bg-panel-2);padding:.8rem 1.3rem;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:.6rem;}
+.spec-titlebar .dot{width:9px;height:9px;border-radius:50%;}
+.spec-body{padding:1.6rem;}
+.spec-dl{display:grid;grid-template-columns:auto 1fr;gap:.5rem 1.3rem;font-size:.94rem;}
+.spec-dl dt{font-family:"JetBrains Mono",monospace;font-size:.72rem;text-transform:uppercase;letter-spacing:.06em;color:var(--text-dim);align-self:start;padding-top:.15rem;}
+.spec-dl dd{margin:0;}
+@media (max-width:560px){.spec-dl{grid-template-columns:1fr;}.spec-dl dt{margin-top:.6rem;}}
+
+/* dataset table */
+.tbl-wrap{overflow-x:auto;border-radius:var(--radius);border:1px solid var(--border);}
+table.dtbl{width:100%;border-collapse:collapse;font-size:.88rem;min-width:640px;}
+table.dtbl th{text-align:left;font-family:"JetBrains Mono",monospace;font-size:.68rem;text-transform:uppercase;letter-spacing:.05em;
+  color:var(--text-dim);background:var(--bg-panel-2);padding:.8rem 1rem;border-bottom:1px solid var(--border);}
+table.dtbl td{padding:.9rem 1rem;border-bottom:1px solid var(--border);vertical-align:top;background:var(--bg-panel);}
+table.dtbl tr:last-child td{border-bottom:none;}
+
+/* metrics / decision tree */
+.apptype-list{display:flex;flex-direction:column;gap:.5rem;}
+.metric-card{background:var(--bg-panel);border:1px solid var(--border);border-radius:var(--radius-sm);padding:1.1rem;transition:all .2s;}
+.metric-card.active{border-color:var(--accent);background:var(--accent-soft);}
+.metric-card.dim{opacity:.4;}
+.metric-card h4{font-size:.98rem;display:flex;align-items:center;gap:.5rem;}
+.metric-card .check{width:16px;height:16px;border-radius:50%;background:var(--accent);display:none;flex-shrink:0;align-items:center;justify-content:center;}
+.metric-card.active .check{display:inline-flex;}
+.metric-card p{font-size:.85rem;color:var(--text-muted);margin-top:.4rem;}
+.recommend-box{margin-top:1.3rem;background:var(--accent-soft);border:1px solid var(--accent);border-radius:var(--radius-sm);padding:1.1rem 1.3rem;}
+.recommend-box .k{font-family:"JetBrains Mono",monospace;font-size:.68rem;text-transform:uppercase;color:var(--accent-strong);letter-spacing:.05em;}
+
+/* run / terminal log */
+.term{background:var(--bg-code);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow);}
+.term-bar{background:var(--bg-panel-2);padding:.65rem 1.1rem;display:flex;align-items:center;gap:.5rem;border-bottom:1px solid var(--border);}
+.term-bar .dot{width:10px;height:10px;border-radius:50%;}
+.term-bar span.fname{margin-left:.5rem;font-family:"JetBrains Mono",monospace;font-size:.75rem;color:var(--text-dim);}
+.term-body{padding:1.1rem 1.3rem;font-family:"JetBrains Mono",monospace;font-size:.82rem;line-height:1.75;min-height:60px;white-space:pre-wrap;}
+.term-body .tl-pass{color:var(--pass);}
+.term-body .tl-warn{color:var(--warn);}
+.term-body .tl-fail{color:var(--fail);}
+.term-body .tl-dim{color:var(--text-dim);}
+.term-body .tl-summary{color:var(--text);font-weight:700;}
+.result-card{border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--bg-panel);padding:1.1rem 1.3rem;
+  display:flex;flex-direction:column;gap:.5rem;border-left-width:4px;opacity:0;transform:translateY(8px);transition:opacity .4s,transform .4s;}
+.result-card.show{opacity:1;transform:translateY(0);}
+.result-card.pass{border-left-color:var(--pass);}
+.result-card.warn{border-left-color:var(--warn);}
+.result-card.fail{border-left-color:var(--fail);}
+.result-top{display:flex;justify-content:space-between;align-items:flex-start;gap:1rem;flex-wrap:wrap;}
+.result-metrics{display:flex;gap:.5rem;flex-wrap:wrap;font-size:.75rem;}
+.result-note{font-size:.85rem;color:var(--text-muted);}
+
+/* code blocks */
+.code-block{background:var(--bg-code);border:1px solid var(--border);border-radius:var(--radius-sm);padding:1.1rem 1.2rem;
+  font-family:"JetBrains Mono",monospace;font-size:.8rem;overflow-x:auto;white-space:pre;line-height:1.65;}
+.code-block .tok-com{color:var(--text-dim);font-style:italic;}
+.code-block .tok-cmd{color:var(--accent-strong);}
+
+/* tool tabs */
+.tabs{display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:1.1rem;}
+.tab{border:1px solid var(--border-strong);background:var(--bg-panel);border-radius:9px;padding:.6em 1.15em;font-weight:600;font-size:.88rem;
+  cursor:pointer;font-family:"Instrument Sans",sans-serif;color:var(--text-muted);}
+.tab.active{border-color:var(--accent);color:var(--text);background:var(--accent-soft);}
+.tool-panel .best{margin:.9rem 0 1.1rem;font-size:.88rem;}
+.tool-panel .best b{color:var(--accent-strong);}
+
+/* gate slider */
+.gate-readout{margin-top:1.2rem;padding:1.1rem 1.2rem;border-radius:var(--radius-sm);background:var(--bg-panel-2);border:1px solid var(--border);}
+.gate-readout b{font-family:"Instrument Sans",sans-serif;font-size:1.3rem;}
+input[type=range]{width:100%;accent-color:var(--accent);height:6px;cursor:pointer;}
+.gate-rows{display:flex;flex-wrap:wrap;gap:.5rem;margin-top:1rem;}
+.gate-row-chip{font-family:"JetBrains Mono",monospace;font-size:.72rem;padding:.35em .7em;border-radius:6px;border:1px solid var(--border);}
+.gate-row-chip.blocked{background:var(--fail-soft);color:var(--fail);border-color:var(--fail);}
+.gate-row-chip.ok{background:var(--pass-soft);color:var(--pass);border-color:var(--pass);}
+
+/* quiz */
+.quiz-box{background:var(--bg-panel);border:1px solid var(--border);border-radius:var(--radius);padding:1.8rem;box-shadow:var(--shadow);}
+.quiz-q{font-family:"Instrument Sans",sans-serif;font-weight:700;font-size:1.25rem;margin-bottom:1.2rem;}
+.quiz-opts{display:flex;flex-direction:column;gap:.7rem;margin-bottom:1.2rem;}
+.quiz-opt{text-align:left;border:1px solid var(--border-strong);background:var(--bg-panel-2);border-radius:var(--radius-sm);padding:.85em 1.1em;
+  cursor:pointer;font-size:.94rem;font-family:inherit;color:var(--text);}
+.quiz-opt:hover{border-color:var(--accent);}
+.quiz-opt.correct{background:var(--pass-soft);border-color:var(--pass);color:var(--pass);}
+.quiz-opt.wrong{background:var(--fail-soft);border-color:var(--fail);color:var(--fail);}
+.quiz-opt:disabled{cursor:default;}
+.quiz-explain{background:var(--bg-panel-2);border-radius:var(--radius-sm);padding:1rem 1.1rem;font-size:.88rem;margin-bottom:1.2rem;display:none;color:var(--text-muted);}
+.quiz-explain.show{display:block;}
+
+/* takeaways */
+.takeaway-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:.9rem;}
+.takeaway-list li{display:flex;gap:.8rem;align-items:flex-start;font-size:1rem;}
+.takeaway-list svg{flex-shrink:0;margin-top:.2rem;}
+.next-card{background:var(--bg-panel);border:1px solid var(--border);border-radius:var(--radius);padding:1.5rem;margin-top:2rem;}
+.next-card h3{font-size:1.15rem;margin-bottom:.6rem;}
+.next-card p{color:var(--text-muted);font-size:.92rem;}
+.footer{text-align:center;padding-block:2.5rem;color:var(--text-dim);font-size:.8rem;font-family:"JetBrains Mono",monospace;}
+.footer button{color:var(--accent-strong);text-decoration:underline;cursor:pointer;background:none;border:none;font:inherit;}
+</style>
+
+<div class="topbar"><div class="topbar-fill" id="scrollFill"></div></div>
+<nav class="stagenav" aria-label="Pipeline stages"><div class="stagenav-inner" id="stagenavInner"></div></nav>
+
+<!-- ================= HERO ================= -->
+<header class="hero" id="s-hero">
+  <div class="hero-grid-bg"></div>
+  <div class="hero-glow" aria-hidden="true"></div>
+  <div class="wrap hero-inner">
+    <div class="termline"><span class="prompt">$</span>&nbsp;eval-harness run --target policypilot-rag<span class="cursor"></span></div>
+    <span class="stage-tag">DELOITTE GEN AI TRAINING · BLOCK 3 · EVAL HARNESS</span>
+    <h1 style="margin-top:.7rem;">You picked a tool. Now prove it actually works.</h1>
+    <p class="lede">Block 1 was about choosing between ChatGPT, Claude, Gemini, and Copilot. Block 3 is about the habit that comes after: what do you actually check, and how do you check it — every time, not just once. Click through the pipeline below.</p>
+    <div class="hero-badges">
+      <span class="badge info">7 stages</span>
+      <span class="badge info">8 things to evaluate</span>
+      <span class="badge info">4 real frameworks</span>
+      <span class="badge pass">1 running scenario: PolicyPilot (RAG)</span>
+    </div>
+    <div class="hero-actions">
+      <button class="btn" id="heroStart">Start at Stage 01: Define ▶</button>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <!-- ================= 01 DEFINE ================= -->
+  <section class="stage" id="s-define">
+    <div class="stage-head reveal">
+      <span class="stage-tag">Stage 01 · Define</span>
+      <h2>What are we even shipping?</h2>
+      <p class="lede">Every eval starts with a spec, not a vibe. Here's today's scenario — it runs through every stage below.</p>
+    </div>
+    <div class="spec-card reveal">
+      <div class="spec-titlebar">
+        <span class="dot" style="background:var(--fail);"></span><span class="dot" style="background:var(--warn);"></span><span class="dot" style="background:var(--pass);"></span>
+        <span class="tag" style="margin-left:.4rem;">run-config.yaml</span>
+      </div>
+      <div class="spec-body">
+        <dl class="spec-dl">
+          <dt>App</dt><dd><strong>PolicyPilot</strong> — a RAG assistant that answers HR &amp; IT policy questions by retrieving from a 500-page internal policy wiki and generating a cited answer.</dd>
+          <dt>Users</dt><dd>~3,000 employees, company-wide, self-serve.</dd>
+          <dt>Stakes</dt><dd>A wrong policy answer is a compliance and legal risk — not just an annoyance.</dd>
+          <dt>Must</dt><dd>Cite the source document for every in-corpus answer. Refuse — not improvise — when the question isn't covered by the corpus.</dd>
+          <dt>Done means</dt><dd>≥90% faithfulness on the golden set, source cited on 100% of in-corpus answers, correct refusal on 100% of out-of-corpus questions.</dd>
+        </dl>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= 02 DATASET ================= -->
+  <section class="stage" id="s-dataset">
+    <div class="stage-head reveal">
+      <span class="stage-tag">Stage 02 · Dataset</span>
+      <h2>Build the golden set before you build the eval</h2>
+      <p class="lede">A golden set is a small, curated, versioned list of realistic inputs — including the tricky ones on purpose. This is PolicyPilot's, before anything has been run against it.</p>
+    </div>
+    <div class="tbl-wrap reveal">
+      <table class="dtbl">
+        <thead><tr><th>#</th><th>Question</th><th>Expected behavior</th><th>Why it's in the set</th></tr></thead>
+        <tbody id="datasetBody"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ================= 03 METRICS (decision tree) ================= -->
+  <section class="stage" id="s-metrics">
+    <div class="stage-head reveal">
+      <span class="stage-tag">Stage 03 · Metrics</span>
+      <h2>What to evaluate depends on what you built</h2>
+      <p class="lede">Pick the kind of AI feature you're shipping — it decides which of these 8 dimensions actually matter first.</p>
+    </div>
+    <div class="reveal" style="display:grid;grid-template-columns:1fr 2fr;gap:2rem;align-items:start;">
+      <div>
+        <div class="apptype-list" id="appTypeList"></div>
+        <div class="recommend-box" id="recommendBox"></div>
+      </div>
+      <div class="grid grid-2" id="metricGrid"></div>
+    </div>
+  </section>
+
+  <!-- ================= 04 RUN ================= -->
+  <section class="stage" id="s-run">
+    <div class="stage-head reveal">
+      <span class="stage-tag">Stage 04 · Run</span>
+      <h2>Run the golden set, watch it fail honestly</h2>
+      <p class="lede">This is how to evaluate in practice: run every case, score it, don't look away from the failures.</p>
+    </div>
+    <div class="reveal">
+      <div class="term" style="margin-bottom:1.4rem;">
+        <div class="term-bar"><span class="dot" style="background:var(--fail);"></span><span class="dot" style="background:var(--warn);"></span><span class="dot" style="background:var(--pass);"></span><span class="fname">eval-harness — run --set golden.yaml</span></div>
+        <div class="term-body" id="termBody">$ ready. click "run evaluation" to start.</div>
+      </div>
+      <button class="btn" id="runBtn">Run evaluation ▶</button>
+      <div class="grid" style="margin-top:1.4rem;" id="resultGrid"></div>
+    </div>
+  </section>
+
+  <!-- ================= 05 JUDGE ================= -->
+  <section class="stage" id="s-judge">
+    <div class="stage-head reveal">
+      <span class="stage-tag">Stage 05 · Judge</span>
+      <h2>Four real tools, four different jobs</h2>
+      <p class="lede">You don't have to build a scoring engine from scratch. Click through what each one is actually for.</p>
+    </div>
+    <div class="reveal tool-panel">
+      <div class="tabs" id="toolTabs"></div>
+      <div class="panel" id="toolPanel"></div>
+    </div>
+  </section>
+
+  <!-- ================= 06 GATE ================= -->
+  <section class="stage" id="s-gate">
+    <div class="stage-head reveal">
+      <span class="stage-tag">Stage 06 · Gate</span>
+      <h2>Wire it into CI — or it's not a habit</h2>
+      <p class="lede">A score you look at once isn't governance. A score that blocks a merge is.</p>
+    </div>
+    <div class="reveal" style="display:grid;grid-template-columns:1fr 1fr;gap:2rem;align-items:start;">
+      <div class="code-block" id="ciYamlBlock"></div>
+      <div class="panel">
+        <h4 style="margin-bottom:.3rem;">Try the gate</h4>
+        <p style="font-size:.85rem;color:var(--text-muted);margin-bottom:1rem;">Drag the minimum faithfulness threshold. See how many of the 6 golden-set cases would actually pass CI at that bar.</p>
+        <label style="display:block;">
+          <div style="display:flex;justify-content:space-between;font-size:.88rem;font-weight:600;margin-bottom:.4rem;"><span>Minimum faithfulness to merge</span><span class="mono" id="thresholdVal" style="color:var(--accent-strong);">0.80</span></div>
+          <input type="range" id="thresholdSlider" min="0" max="100" value="80">
+        </label>
+        <div class="gate-readout" id="gateReadout"></div>
+        <div class="gate-rows" id="gateRows"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= 07 SHIP / QUIZ ================= -->
+  <section class="stage" id="s-quiz">
+    <div class="stage-head reveal">
+      <span class="stage-tag">Stage 07 · Ship</span>
+      <h2>Quick knowledge check</h2>
+      <p class="lede">Six questions before you go build one of these for real.</p>
+    </div>
+    <div class="quiz-box reveal" id="quizBox"></div>
+  </section>
+
+</main>
+
+<section class="stage" id="s-takeaways" style="border-bottom:none;">
+  <div class="wrap">
+    <div class="stage-head reveal">
+      <span class="stage-tag">Recap</span>
+      <h2>Evaluation is the habit that makes selection defensible</h2>
+    </div>
+    <ul class="takeaway-list reveal">
+      <li><svg width="20" height="20" viewBox="0 0 20 20"><circle cx="10" cy="10" r="9" fill="#34D399"/><path d="M6 10.5l2.5 2.5L14 7" stroke="#0B0F14" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>What to evaluate depends on the app type — RAG needs faithfulness first, classification needs precision/recall, code-gen needs execution.</li>
+      <li><svg width="20" height="20" viewBox="0 0 20 20"><circle cx="10" cy="10" r="9" fill="#34D399"/><path d="M6 10.5l2.5 2.5L14 7" stroke="#0B0F14" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>Saying "I don't know" can be the correct output — refusing on out-of-corpus questions is gradeable, not a cop-out.</li>
+      <li><svg width="20" height="20" viewBox="0 0 20 20"><circle cx="10" cy="10" r="9" fill="#34D399"/><path d="M6 10.5l2.5 2.5L14 7" stroke="#0B0F14" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>RAGAS, DeepEval, Promptfoo, and Langfuse solve different problems — pick by the job, the same way you pick a model.</li>
+      <li><svg width="20" height="20" viewBox="0 0 20 20"><circle cx="10" cy="10" r="9" fill="#34D399"/><path d="M6 10.5l2.5 2.5L14 7" stroke="#0B0F14" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>A golden set with deliberately tricky cases beats a big pile of easy ones.</li>
+      <li><svg width="20" height="20" viewBox="0 0 20 20"><circle cx="10" cy="10" r="9" fill="#34D399"/><path d="M6 10.5l2.5 2.5L14 7" stroke="#0B0F14" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>An eval score that doesn't block a merge is an opinion. One wired into CI is a gate.</li>
+    </ul>
+    <div class="next-card reveal">
+      <h3>Bridge back to Block 1</h3>
+      <p>This is exactly what today's opening promised: the manual rubric (correctness, completeness, faithfulness, actionability) formalizes into RAGAS, LLM-as-a-judge, and DeepEval — then CI/CD makes it automatic. Same habit, now with instruments.</p>
+    </div>
+  </div>
+  <div class="footer">Deloitte Gen AI Training · Eval Harness Console &nbsp;·&nbsp; <button id="backTop">Back to top ↑</button></div>
+</section>
+
+<script>
+(function(){
+"use strict";
+try{
+
+function el(tag,cls,html){var e=document.createElement(tag); if(cls)e.className=cls; if(html!=null)e.innerHTML=html; return e;}
+function $(id){return document.getElementById(id);}
+function esc(s){return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
+function formatCode(raw){
+  return raw.split("\n").map(function(line){
+    var e2 = esc(line);
+    var trimmed = line.trim();
+    if(trimmed.indexOf("#")===0 || trimmed.indexOf("//")===0) return '<span class="tok-com">'+e2+'</span>';
+    if(trimmed.indexOf("$")===0) return '<span class="tok-cmd">'+e2+'</span>';
+    return e2;
+  }).join("\n");
+}
+
+/* ============ stage nav + progress ============ */
+var STAGES = [
+  ["s-hero","Start"],["s-define","01 Define"],["s-dataset","02 Dataset"],["s-metrics","03 Metrics"],
+  ["s-run","04 Run"],["s-judge","05 Judge"],["s-gate","06 Gate"],["s-quiz","07 Ship"],["s-takeaways","Recap"]
+];
+var navInner = $("stagenavInner");
+STAGES.forEach(function(s,i){
+  var p = el("button","stagenav-pill");
+  var parts = s[1].split(" ");
+  var numPart = /^\d/.test(parts[0]) ? parts[0] : "";
+  p.innerHTML = (numPart ? '<span class="n">'+numPart+'</span>' : '') + ' ' + (numPart ? parts.slice(1).join(" ") : s[1]);
+  p.addEventListener("click",function(){ document.getElementById(s[0]).scrollIntoView({behavior:"smooth"}); });
+  p.dataset.target = s[0];
+  navInner.appendChild(p);
+});
+function updateNavAndProgress(){
+  var doc = document.documentElement;
+  var scrolled = doc.scrollTop||document.body.scrollTop;
+  var height = (doc.scrollHeight||document.body.scrollHeight) - doc.clientHeight;
+  var pct = height>0 ? Math.min(100,(scrolled/height)*100) : 0;
+  $("scrollFill").style.width = pct+"%";
+  var mid = window.innerHeight*0.35;
+  var current = STAGES[0][0];
+  STAGES.forEach(function(s){ var e=document.getElementById(s[0]); if(e && e.getBoundingClientRect().top<=mid) current=s[0]; });
+  navInner.querySelectorAll(".stagenav-pill").forEach(function(p){ p.classList.toggle("active", p.dataset.target===current); });
+}
+window.addEventListener("scroll", updateNavAndProgress, {passive:true});
+window.addEventListener("resize", updateNavAndProgress);
+updateNavAndProgress();
+
+var io = new IntersectionObserver(function(entries){ entries.forEach(function(e){ if(e.isIntersecting) e.target.classList.add("is-visible"); }); },{threshold:.1});
+document.querySelectorAll(".reveal").forEach(function(e){ io.observe(e); });
+
+$("heroStart").addEventListener("click",function(){ $("s-define").scrollIntoView({behavior:"smooth"}); });
+$("backTop").addEventListener("click",function(){ window.scrollTo({top:0,behavior:"smooth"}); });
+
+/* ============ golden dataset (shared across stages) ============ */
+var GOLDEN = [
+  {q:"How many days of parental leave do I get?",expected:"Cites Leave Policy v3 · states 20 days",
+   actual:'You get 20 days of paid parental leave, per Leave Policy v3, Section 4.2.',
+   verdict:"pass",faithfulness:0.95,relevancy:0.93,latency:1.8,cost:0.011,tagline:"Faithfulness · Citation",
+   why:"A clean in-corpus lookup — the baseline case everything else is compared against."},
+  {q:"Can I expense a client dinner over $200?",expected:"Cites Expense Policy · approval required over $150",
+   actual:'Yes, dinners up to $200 are always pre-approved.',
+   verdict:"fail",faithfulness:0.41,relevancy:0.70,latency:2.1,cost:0.012,tagline:"Faithfulness · Hallucinated threshold",
+   why:"Invented a $200 threshold with no citation — the real policy caps pre-approval at $150. Classic RAG hallucination."},
+  {q:"Can I work remotely from another country for a month?",expected:"Not covered in current policy — should say so and route to HR",
+   actual:"Yes, that's fine as long as you notify your manager.",
+   verdict:"fail",faithfulness:0.30,relevancy:0.55,latency:1.6,cost:0.010,tagline:"Groundedness · Should have refused",
+   why:"Nothing in the corpus covers this. The correct answer is 'not covered — ask HR,' not an improvised yes."},
+  {q:"Summarize the IT acceptable-use policy in 3 bullets.",expected:"3 bullets, on-topic, cites IT AUP",
+   actual:"• Company devices for business use only  • Never share credentials  • Report a lost device within 24h (IT AUP §2)",
+   verdict:"pass",faithfulness:0.96,relevancy:0.94,latency:2.4,cost:0.013,tagline:"Format · Relevance",
+   why:"Tests structure compliance, not just correctness — did it actually give 3 bullets?"},
+  {q:"How do I request a laptop upgrade?",expected:"Correct steps, well under 3s, well under $0.02/call at this volume",
+   actual:"Correct steps and citation, but took 8.4s and $0.041/call.",
+   verdict:"warn",faithfulness:0.94,relevancy:0.90,latency:8.4,cost:0.041,tagline:"Latency · Cost",
+   why:"Right answer, wrong economics — at 3,000 employees this model tier would blow the budget."},
+  {q:"What's the parental leave policy? (asked twice, reworded)",expected:"Same answer both times",
+   actual:"First pass: '20 days.' Reworded pass: '15 days.'",
+   verdict:"warn",faithfulness:0.85,relevancy:0.88,latency:2.0,cost:0.011,tagline:"Robustness · Consistency",
+   why:"Same question, two different numbers depending on phrasing — a single spot-check would miss this entirely."}
+];
+
+/* ============ 02 dataset table ============ */
+var dsBody = $("datasetBody");
+GOLDEN.forEach(function(g,i){
+  var tr = el("tr");
+  tr.innerHTML = '<td class="mono" style="color:var(--text-dim);">'+(i+1)+'</td>'+
+    '<td style="font-weight:600;max-width:220px;">'+esc(g.q)+'</td>'+
+    '<td style="color:var(--text-muted);max-width:260px;">'+esc(g.expected)+'</td>'+
+    '<td style="color:var(--text-muted);max-width:260px;">'+esc(g.why)+'</td>';
+  dsBody.appendChild(tr);
+});
+
+/* ============ 03 metrics decision tree ============ */
+var METRICS = [
+  {id:"correctness",name:"Correctness",def:"Is the task actually done right — factually, logically, or functionally?"},
+  {id:"faithfulness",name:"Faithfulness",def:"Grounded in the source material — no fabrication, no invented facts."},
+  {id:"relevance",name:"Relevance",def:"On-topic and complete for what was actually asked."},
+  {id:"safety",name:"Safety",def:"No toxicity, PII leakage, bias, or jailbreak susceptibility."},
+  {id:"format",name:"Format",def:"Matches the required structure — schema, length, required sections."},
+  {id:"latency_cost",name:"Latency & Cost",def:"Fast and cheap enough once you multiply by real volume."},
+  {id:"robustness",name:"Robustness",def:"Consistent output across repeated or reworded runs."},
+  {id:"human_preference",name:"Human preference",def:"What a real user would actually prefer, judged by people."}
+];
+var APPTYPES = [
+  {id:"chatbot",label:"Chatbot / assistant",top:["correctness","relevance","safety","human_preference"],
+   method:"Manual rubric + LLM-as-a-judge",tool:"DeepEval (G-Eval) or a custom rubric prompt",
+   note:"Conversational quality is subjective — pair automated scoring with a human spot-check sample."},
+  {id:"rag",label:"RAG / knowledge search",top:["faithfulness","correctness","relevance","format"],
+   method:"RAG-specific metrics (RAGAS-style)",tool:"RAGAS",
+   note:"Retrieval and generation can each fail separately — score them separately, not just the final answer.",def:true},
+  {id:"content",label:"Content generation",top:["relevance","human_preference","safety","format"],
+   method:"LLM-as-a-judge + human preference",tool:"DeepEval G-Eval, or Promptfoo's llm-rubric assertion",
+   note:"There's rarely one 'right' answer — lean on judged quality and pairwise preference, not exact match."},
+  {id:"classification",label:"Classification / extraction",top:["correctness","robustness"],
+   method:"Reference-based metrics",tool:"scikit-learn — precision / recall / F1",
+   note:"You have ground-truth labels. Use them. Precision, recall, F1 — not vibes."},
+  {id:"codegen",label:"Code generation",top:["correctness","format","robustness"],
+   method:"Execution-based testing",tool:"Unit tests / pytest",
+   note:"Run the code. Passing tests beat a model's opinion of its own code."},
+  {id:"agent",label:"Agent with tool use",top:["correctness","robustness","safety","latency_cost"],
+   method:"Trajectory / tool-call evaluation",tool:"DeepEval tool-correctness metrics, or manual trace review in Langfuse",
+   note:"Judge the path it took — which tools, in what order — not just the final message."}
+];
+var atList = $("appTypeList");
+var metricGrid = $("metricGrid");
+var recommendBox = $("recommendBox");
+METRICS.forEach(function(m){
+  var card = el("div","metric-card dim");
+  card.id = "metric-"+m.id;
+  card.innerHTML = '<h4><span class="check">✓</span>'+m.name+'</h4><p>'+m.def+'</p>';
+  metricGrid.appendChild(card);
+});
+function selectAppType(id){
+  var t = APPTYPES.filter(function(a){return a.id===id;})[0];
+  atList.querySelectorAll(".chip").forEach(function(c){ c.classList.toggle("selected", c.dataset.id===id); });
+  METRICS.forEach(function(m){
+    var card = $("metric-"+m.id);
+    var isTop = t.top.indexOf(m.id)>-1;
+    card.classList.toggle("active", isTop);
+    card.classList.toggle("dim", !isTop);
+  });
+  recommendBox.innerHTML = '<div class="k">Recommended for: '+t.label+'</div>'+
+    '<p style="margin-top:.5rem;font-weight:600;">'+t.method+'</p>'+
+    '<p style="margin-top:.3rem;font-size:.88rem;">Tool: '+t.tool+'</p>'+
+    '<p style="margin-top:.6rem;font-size:.85rem;color:var(--text-muted);">'+t.note+'</p>';
+}
+APPTYPES.forEach(function(t){
+  var chip = el("button","chip",t.label);
+  chip.dataset.id = t.id;
+  chip.addEventListener("click",function(){ selectAppType(t.id); });
+  atList.appendChild(chip);
+});
+selectAppType("rag");
+
+/* ============ 04 run simulation ============ */
+var runBtn = $("runBtn");
+var termBody = $("termBody");
+var resultGrid = $("resultGrid");
+var running = false;
+function buildResultCard(g,i){
+  var card = el("div","result-card "+g.verdict);
+  card.innerHTML = '<div class="result-top"><strong>#'+(i+1)+' — '+esc(g.q)+'</strong><span class="badge '+g.verdict+'">'+g.verdict+'</span></div>'+
+    '<div class="result-metrics">'+
+      '<span class="tag">faithfulness '+g.faithfulness.toFixed(2)+'</span>'+
+      '<span class="tag">relevancy '+g.relevancy.toFixed(2)+'</span>'+
+      '<span class="tag">latency '+g.latency.toFixed(1)+'s</span>'+
+      '<span class="tag">cost $'+g.cost.toFixed(3)+'</span>'+
+      '<span class="tag">'+g.tagline+'</span>'+
+    '</div>'+
+    '<div class="result-note">'+esc(g.actual)+(g.why?' — <em>'+esc(g.why)+'</em>':'')+'</div>';
+  return card;
+}
+function runEval(){
+  if(running) return;
+  running = true;
+  runBtn.disabled = true;
+  runBtn.textContent = "Running…";
+  termBody.innerHTML = "";
+  resultGrid.innerHTML = "";
+  var lines = [];
+  var i = 0;
+  var interval = setInterval(function(){
+    if(i>=GOLDEN.length){
+      clearInterval(interval);
+      var passN = GOLDEN.filter(function(g){return g.verdict==="pass";}).length;
+      var warnN = GOLDEN.filter(function(g){return g.verdict==="warn";}).length;
+      var failN = GOLDEN.filter(function(g){return g.verdict==="fail";}).length;
+      lines.push('<span class="tl-summary">'+GOLDEN.length+' cases run · '+passN+' passed · '+warnN+' warned · '+failN+' failed</span>');
+      lines.push(failN>0 ? '<span class="tl-fail">gate: BLOCKED — faithfulness threshold not met on '+failN+' case(s)</span>' : '<span class="tl-pass">gate: PASSED</span>');
+      termBody.innerHTML = lines.join("\n");
+      runBtn.disabled = false;
+      runBtn.textContent = "Run again ▶";
+      running = false;
+      return;
+    }
+    var g = GOLDEN[i];
+    var cls = g.verdict==="pass"?"tl-pass":(g.verdict==="warn"?"tl-warn":"tl-fail");
+    lines.push('<span class="tl-dim">['+(i+1)+'/'+GOLDEN.length+']</span> "'+esc(g.q)+'" → <span class="'+cls+'">'+g.verdict.toUpperCase()+'</span> (faithfulness='+g.faithfulness.toFixed(2)+')');
+    termBody.innerHTML = lines.join("\n");
+    var rc = buildResultCard(g,i);
+    resultGrid.appendChild(rc);
+    requestAnimationFrame(function(){ requestAnimationFrame(function(){ rc.classList.add("show"); }); });
+    i++;
+  }, 450);
+}
+runBtn.addEventListener("click", runEval);
+
+/* ============ 05 tool tabs ============ */
+var TOOLS = [
+  {id:"ragas",name:"RAGAS",best:"RAG / knowledge search",
+   oneliner:"Purpose-built for RAG pipelines — scores retrieval and generation separately instead of judging only the final answer.",
+   code:`from ragas import evaluate
+from ragas.metrics import faithfulness, answer_relevancy, context_precision
+from datasets import Dataset
+
+dataset = Dataset.from_dict({
+    "question": questions,
+    "answer": generated_answers,
+    "contexts": retrieved_chunks,
+    "ground_truth": reference_answers,
+})
+
+scores = evaluate(dataset, metrics=[faithfulness, answer_relevancy, context_precision])
+print(scores)
+# {'faithfulness': 0.92, 'answer_relevancy': 0.88, 'context_precision': 0.95}`,
+   note:"Illustrative — check the current RAGAS docs for exact API, it moves fast."},
+  {id:"deepeval",name:"DeepEval",best:"Any app — chatbots, RAG, agents, classification",
+   oneliner:"A pytest-style framework — write eval assertions the same way you already write unit tests, and run them the same way too.",
+   code:`from deepeval import assert_test
+from deepeval.metrics import FaithfulnessMetric, AnswerRelevancyMetric
+from deepeval.test_case import LLMTestCase
+
+test_case = LLMTestCase(
+    input="Can I work remotely from another country for a month?",
+    actual_output=policypilot_response,
+    retrieval_context=retrieved_chunks,
+)
+
+assert_test(test_case, [
+    FaithfulnessMetric(threshold=0.8),
+    AnswerRelevancyMetric(threshold=0.8),
+])
+
+# $ deepeval test run tests/test_policypilot.py`,
+   note:"Runs like any pytest suite — which is exactly what makes it easy to drop into CI."},
+  {id:"promptfoo",name:"Promptfoo",best:"Comparing prompts / models side by side, catching prompt regressions",
+   oneliner:"Config-driven regression testing across prompts and providers — no Python required, just a YAML file.",
+   code:`prompts:
+  - "Answer using only the provided context: {{context}}\\n\\nQuestion: {{question}}"
+providers:
+  - openai:gpt-4o-mini
+  - anthropic:claude-3-5-sonnet-20241022
+tests:
+  - vars:
+      question: "How many parental leave days do I get?"
+      context: "policy_docs/leave_policy.md"
+    assert:
+      - type: contains
+        value: "20 days"
+      - type: llm-rubric
+        value: "Cites the source policy document"
+
+# $ promptfoo eval && promptfoo view`,
+   note:"Great for A/B-testing two models or two prompt versions on the exact same test set."},
+  {id:"langfuse",name:"Langfuse",best:"Watching production traffic, not just a pre-launch test set",
+   oneliner:"Observability first — traces every real call, then attaches eval scores to what actually shipped, not just what you tested in advance.",
+   code:`from langfuse import Langfuse
+langfuse = Langfuse()
+
+trace = langfuse.trace(name="policypilot-query")
+trace.score(name="faithfulness", value=0.92, comment="from RAGAS")
+
+# One dashboard: cost, latency, and eval scores on live traffic.`,
+   note:"This is where Block 1's cost/observability thread and today's eval scores meet."}
+];
+var toolTabs = $("toolTabs");
+var toolPanel = $("toolPanel");
+var activeTool = 0;
+TOOLS.forEach(function(t,i){
+  var tab = el("button","tab",t.name);
+  tab.addEventListener("click",function(){ activeTool=i; renderTool(); });
+  toolTabs.appendChild(tab);
+});
+function renderTool(){
+  toolTabs.querySelectorAll(".tab").forEach(function(t,i){ t.classList.toggle("active", i===activeTool); });
+  var t = TOOLS[activeTool];
+  toolPanel.innerHTML = '<h4 style="margin-bottom:.6rem;">'+t.name+'</h4>'+
+    '<p>'+t.oneliner+'</p>'+
+    '<p class="best"><b>Best for:</b> '+t.best+'</p>'+
+    '<div class="code-block">'+formatCode(t.code)+'</div>'+
+    '<p style="margin-top:.9rem;font-size:.78rem;color:var(--text-dim);font-style:italic;">'+t.note+'</p>';
+}
+renderTool();
+
+/* ============ 06 gate ============ */
+var ciYaml = `name: eval-harness
+on: [pull_request]
+jobs:
+  eval:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: pip install -r requirements.txt
+      - run: deepeval test run tests/ --min-faithfulness 0.8
+      - run: promptfoo eval --config promptfooconfig.yaml
+      - if: failure()
+        run: echo "Eval regression detected — blocking merge" && exit 1`;
+$("ciYamlBlock").innerHTML = formatCode(ciYaml);
+
+var thresholdSlider = $("thresholdSlider");
+function renderGate(){
+  var threshold = (+thresholdSlider.value)/100;
+  $("thresholdVal").textContent = threshold.toFixed(2);
+  var okCount = GOLDEN.filter(function(g){ return g.faithfulness >= threshold; }).length;
+  var blockedCount = GOLDEN.length - okCount;
+  var readout = $("gateReadout");
+  readout.innerHTML = '<b>'+okCount+' / '+GOLDEN.length+' cases would pass CI</b><br>'+
+    '<span style="color:var(--text-muted);font-size:.88rem;">'+(blockedCount>0 ? blockedCount+' case(s) would block the merge at this threshold.' : "Nothing blocks the merge at this threshold — but check it isn't set so low it's meaningless.")+'</span>';
+  var rows = $("gateRows");
+  rows.innerHTML = "";
+  GOLDEN.forEach(function(g,i){
+    var ok = g.faithfulness >= threshold;
+    var chip = el("span","gate-row-chip "+(ok?"ok":"blocked"), "#"+(i+1)+" "+g.faithfulness.toFixed(2)+(ok?" ✓":" ✕"));
+    rows.appendChild(chip);
+  });
+}
+thresholdSlider.addEventListener("input", renderGate);
+renderGate();
+
+/* ============ 07 quiz ============ */
+var QUIZ = [
+  {q:"PolicyPilot invents a $200 expense threshold that isn't in any policy doc. Which dimension caught this?",
+   opts:["Latency & cost","Faithfulness / groundedness","Format","Human preference"],correct:1,
+   explain:"Faithfulness measures whether the answer is grounded in the source — an invented number with no citation is a textbook faithfulness failure."},
+  {q:"Which tool is purpose-built to score a RAG pipeline's retrieval and generation separately?",
+   opts:["Promptfoo","Langfuse","RAGAS","pytest"],correct:2,
+   explain:"RAGAS ships metrics like context precision/recall (retrieval quality) and faithfulness (generation quality) as separate scores."},
+  {q:"True or false: refusing to answer can be the CORRECT output for a RAG assistant.",
+   opts:["True","False"],correct:0,
+   explain:"True — when a question isn't covered by the corpus, saying so (and routing to a human) beats a confident, fabricated answer."},
+  {q:"You have ground-truth labels for a classification task. What should you reach for first?",
+   opts:["An LLM-as-a-judge prompt","Reference-based metrics (precision / recall / F1)","A human preference survey","A vibes-based spot check"],correct:1,
+   explain:"When you have ground truth, use it directly — precision, recall, and F1 are cheaper and more reliable than judgment calls here."},
+  {q:"Same question, reworded, gives two different answers from the same system. Which eval dimension is this?",
+   opts:["Format","Safety","Robustness / consistency","Latency"],correct:2,
+   explain:"Robustness checks whether the system holds up under repeated or reworded inputs — this is exactly the failure mode it's designed to catch."},
+  {q:"What turns a one-off eval script into a habit instead of a one-time check?",
+   opts:["Running it manually before every demo","Wiring it into a CI/CD gate that blocks regressions","Asking a teammate to eyeball the output","Trusting the model's own confidence score"],correct:1,
+   explain:"A CI gate makes the check automatic and unavoidable — the same shift Block 1 made from 'pick once' to 'pick, then keep checking.'"}
+];
+var qIdx=0, qScore=0;
+var quizBox = $("quizBox");
+function renderQuiz(){
+  if(qIdx>=QUIZ.length){
+    var pct = Math.round((qScore/QUIZ.length)*100);
+    var msg = pct===100 ? "Ready to build one of these for real." : (pct>=66 ? "Solid — skim Stage 03 and Stage 05 once more." : "Worth another pass through the Metrics and Judge stages.");
+    quizBox.innerHTML = '<div style="text-align:center;">'+
+      '<div class="badge '+(pct>=66?"pass":"warn")+'" style="margin:0 auto 1rem;font-size:.8rem;">SCORE '+pct+'%</div>'+
+      '<h3 style="font-size:1.6rem;">'+qScore+' / '+QUIZ.length+' correct</h3>'+
+      '<p class="lede" style="margin:.8rem auto 1.2rem;">'+msg+'</p>'+
+      '<button class="btn ghost" id="qRestart">Retake the quiz</button></div>';
+    $("qRestart").addEventListener("click",function(){ qIdx=0; qScore=0; renderQuiz(); });
+    return;
+  }
+  var item = QUIZ[qIdx];
+  quizBox.innerHTML = '';
+  quizBox.appendChild(el("div","tag","Question "+(qIdx+1)+" of "+QUIZ.length));
+  quizBox.appendChild(el("div","quiz-q",item.q));
+  var opts = el("div","quiz-opts");
+  var explain = el("div","quiz-explain",item.explain);
+  var nextBtn = el("button","btn", qIdx<QUIZ.length-1 ? "Next question →" : "See my score →");
+  nextBtn.style.display="none";
+  item.opts.forEach(function(optText,i){
+    var b = el("button","quiz-opt",optText);
+    b.addEventListener("click",function(){
+      opts.querySelectorAll(".quiz-opt").forEach(function(o,j){
+        o.disabled = true;
+        if(j===item.correct) o.classList.add("correct");
+        else if(j===i) o.classList.add("wrong");
+      });
+      if(i===item.correct) qScore++;
+      explain.classList.add("show");
+      nextBtn.style.display = "inline-flex";
+    });
+    opts.appendChild(b);
+  });
+  quizBox.appendChild(opts);
+  quizBox.appendChild(explain);
+  nextBtn.addEventListener("click",function(){ qIdx++; renderQuiz(); });
+  quizBox.appendChild(nextBtn);
+}
+renderQuiz();
+
+}catch(err){ console.error("Eval Harness Console init error:", err); }
+})();
+</script>
